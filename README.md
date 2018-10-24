@@ -71,3 +71,6 @@ Single-Page Application with React server-side rendering.
 ├── theme                    # Theme as a local package
 └── process.json             # pm2 process file
 ```
+## License
+
+MIT © [webdevstar](https://github.com/webdevstar)
