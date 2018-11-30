@@ -1,1 +1,1 @@
-export default APPLICATION_TEXT;
+module.exports = APPLICATION_TEXT;

@@ -1,52 +1,29 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { createStore, applyMiddleware } from 'redux';
-import { Provider } from 'react-redux';
-import thunkMiddleware from 'redux-thunk';
-import { BrowserRouter } from 'react-router-dom';
-import { initOnClient } from 'theme';
-import clientSettings from './settings';
-import reducers from '../shared/reducers';
-import * as analytics from '../shared/analytics';
-import App from '../shared/app';
-import api from './api';
+import React from 'react'
+import ReactDOM from 'react-dom'
+import {createStore, applyMiddleware} from 'redux'
+import {Provider} from 'react-redux'
+import {Router, Route, match, browserHistory, IndexRoute} from 'react-router'
+import {syncHistoryWithStore, routerReducer, routerMiddleware, push} from 'react-router-redux'
+import thunkMiddleware from 'redux-thunk'
+import reducers from '../shared/reducers'
+import createRoutes from '../shared/routes'
 
-const initialState = window.__APP_STATE__;
-const themeText = window.__APP_TEXT__;
+const initialState = window.__REDUX_STATE__
 
-initOnClient({
-	themeSettings: initialState.app.themeSettings,
-	text: themeText,
-	language: clientSettings.language,
-	api: api
-});
+const routerMiddlewareConst = routerMiddleware(browserHistory);
+const store = createStore(reducers, initialState, applyMiddleware(thunkMiddleware, routerMiddlewareConst));
+const history = syncHistoryWithStore(browserHistory, store)
+const routes = createRoutes(store)
+//history.listen(location => { dispatch(routeLocationDidUpdate(location)) });
 
-const store = createStore(
-	reducers,
-	initialState,
-	applyMiddleware(thunkMiddleware)
-);
+const {pathname, search, hash} = window.location
+const location = `${pathname}${search}${hash}`
 
-ReactDOM.hydrate(
-	<Provider store={store}>
-		<BrowserRouter>
-			<App />
-		</BrowserRouter>
-	</Provider>,
-	document.getElementById('app')
-);
-
-analytics.onPageLoad({ state: initialState });
-
-if ('serviceWorker' in navigator) {
-	window.addEventListener('load', () => {
-		navigator.serviceWorker
-			.register('/sw.js')
-			.then(registration => {
-				console.log('SW registered.');
-			})
-			.catch(registrationError => {
-				console.log('SW registration failed: ', registrationError);
-			});
-	});
-}
+const content = document.getElementById('content');
+match({
+  history,
+  routes
+}, (error, location, renderProps) => {
+  ReactDOM.render(
+    <Provider store={store}><Router {...renderProps}/></Provider>, content)
+})

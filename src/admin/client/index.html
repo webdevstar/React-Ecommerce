@@ -5,7 +5,6 @@
   <title>Dashboard</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1976D2">
   <link rel="manifest" href="/admin-assets/manifest.json">
   <link rel="shortcut icon" href="/admin-assets/images/shortcut.png">
 </head>
@@ -145,31 +144,26 @@
 
   <script>
     function resizeElements() {
-      if(window.innerWidth >= 769) {
-        var elContainer = document.getElementById('container');
-        var elHeadContainer = document.getElementById('headContainer');
-        var elBodyContainer = document.getElementById('bodyContainer');
+      var elContainer = document.getElementById('container');
+      var elHeadContainer = document.getElementById('headContainer');
+      var elBodyContainer = document.getElementById('bodyContainer');
 
-        if (elBodyContainer) {
-          elBodyContainer.style.height = ((elContainer.clientHeight - elHeadContainer.clientHeight) + "px");
-        }
+      if (elBodyContainer) {
+        elBodyContainer.style.height = ((elContainer.clientHeight - elHeadContainer.clientHeight) + "px");
       }
     }
     window.addEventListener('resize', resizeElements);
     window.addEventListener('load', resizeElements);
-
-    if("Notification" in window){
-      if(Notification.permission !== "denied") {
-        Notification.requestPermission();
-      }
-    }
   </script>
+  <link href="/admin-assets/css/flexboxgrid.min.css" rel="stylesheet" type="text/css" />
+  <link href="/admin-assets/css/material.min.css" rel="stylesheet" type="text/css" />
+  <link href="/admin-assets/css/style.css" rel="stylesheet" type="text/css" />
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&subset=cyrillic" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <script src="/admin-assets/data/countries.js"></script>
-  <script src="/admin-assets/data/currencies.js"></script>
-  <script src="/admin-assets/data/timezones.js"></script>
-  <script src="/admin-assets/tinymce/tinymce-4.7.5.min.js" defer></script>
+  <script src="/admin-assets/data/countries.js" defer></script>
+  <script src="/admin-assets/data/currencies.js" defer></script>
+  <script src="/admin-assets/data/timezones.js" defer></script>
+  <script src="/admin-assets/tinymce/tinymce.min.js" defer></script>
 </body>
 
 </html>

@@ -1,66 +1,29 @@
-import { connect } from 'react-redux';
-import { withRouter } from 'react-router';
-import {
-	fetchCustomer,
-	clearCustomerDetails,
-	updateCustomer,
-	updateAddress,
-	deleteAddress,
-	setDefaultBillingAddress,
-	setDefaultShippingAddress
-} from '../actions';
-import CustomerDetails from './components/details';
+import { connect } from 'react-redux'
+import { reset } from 'redux-form';
+import { fetchProduct, cancelProductEdit, updateProduct  } from '../actions'
+import Form from './components/form'
 
-const mapStateToProps = (state, ownProps) => {
-	return {
-		settings: state.settings.settings,
-		customer: state.customers.editCustomer
-	};
-};
+const mapStateToProps = (state) => {
+  return {
+    initialValues: state.products.editItem,
+    isFetchingEdit: state.products.isFetchingEdit
+    // categoryId: state.productCategories.selectedId,
+    // items: state.productCategories.items,
+  }
+}
 
-const mapDispatchToProps = (dispatch, ownProps) => {
-	return {
-		fetchData: () => {
-			const { customerId } = ownProps.match.params;
-			dispatch(fetchCustomer(customerId));
-		},
-		clearData: () => {
-			dispatch(clearCustomerDetails());
-		},
-		onUpdateAddress: address => {
-			const { customerId } = ownProps.match.params;
-			dispatch(updateAddress(customerId, address.id, address));
-		},
-		onDeleteAddress: addressId => {
-			const { customerId } = ownProps.match.params;
-			dispatch(deleteAddress(customerId, addressId));
-		},
-		onSetDefaultBillingAddress: addressId => {
-			const { customerId } = ownProps.match.params;
-			dispatch(setDefaultBillingAddress(customerId, addressId));
-		},
-		onSetDefaultShippingAddress: addressId => {
-			const { customerId } = ownProps.match.params;
-			dispatch(setDefaultShippingAddress(customerId, addressId));
-		},
-		onCustomerSummaryUpdate: customer => {
-			dispatch(
-				updateCustomer({
-					id: customer.id,
-					note: customer.note,
-					full_name: customer.full_name,
-					group_id: customer.group_id,
-					email: customer.email,
-					mobile: customer.mobile
-				})
-			);
-		}
-	};
-};
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchData: (productId) => {
+      dispatch(fetchProduct(productId));
+    },
+    eraseData: () => {
+      dispatch(cancelProductEdit());
+    },
+    onSubmit: (values) => {
+      dispatch(updateProduct(values));
+    }
+  }
+}
 
-export default withRouter(
-	connect(
-		mapStateToProps,
-		mapDispatchToProps
-	)(CustomerDetails)
-);
+export default connect(mapStateToProps, mapDispatchToProps)(Form);

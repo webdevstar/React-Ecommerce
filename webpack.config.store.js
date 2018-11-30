@@ -1,137 +1,68 @@
-const path = require('path');
 const webpack = require('webpack');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-const WorkboxPlugin = require('workbox-webpack-plugin');
+const env = process.env.NODE_ENV;
 
-module.exports = {
-	entry: {
-		app: ['babel-polyfill', './src/store/client/index.js'],
-		theme: ['theme']
-	},
+module.exports = () => {
+  var config = {
+    entry: {
+      app: ['babel-polyfill', './src/store/client/index.js'],
+      theme: ['theme']
+    },
 
-	performance: {
-		hints: false
-	},
+    output: {
+      publicPath: '/',
+      path: './public/',
+      filename: 'assets/js/app-[chunkhash].js'
+    },
 
-	output: {
-		publicPath: '/',
-		path: path.resolve(__dirname, 'theme'),
-		filename: 'assets/js/[name]-[chunkhash].js',
-		chunkFilename: 'assets/js/[name]-[chunkhash].js'
-	},
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: ['babel-loader']
+        }, {
+          test: /\.json$/,
+          exclude: /node_modules/,
+          use: ['json-loader']
+        }
+      ]
+    },
 
-	optimization: {
-		splitChunks: {
-			cacheGroups: {
-				vendor: {
-					chunks: 'initial',
-					name: 'theme',
-					test: 'theme',
-					enforce: true
-				}
-			}
-		}
-	},
+    plugins: [
+      new webpack.optimize.CommonsChunkPlugin({
+        name: 'theme',
+        minChunks: Infinity,
+        filename: 'assets/js/theme-[chunkhash].js'
+      }),
+      new HtmlWebpackPlugin({
+        template: 'public/assets/template.html',
+        inject: 'body',
+        filename: 'assets/index.html'
+      })
+    ]
+  };
 
-	module: {
-		rules: [
-			{
-				test: /\.(js|jsx)$/,
-				exclude: /node_modules/,
-				use: {
-					loader: 'babel-loader',
-					options: {
-						presets: ['env', 'react'],
-						plugins: ['transform-class-properties']
-					}
-				}
-			},
-			{
-				test: /\.css$/,
-				use: [
-					MiniCssExtractPlugin.loader,
-					{
-						loader: 'css-loader',
-						options: {
-							modules: false,
-							importLoaders: true
-						}
-					},
-					'postcss-loader'
-				]
-			},
-			{
-				test: /\.scss$/,
-				use: [
-					MiniCssExtractPlugin.loader,
-					'css-loader',
-					'postcss-loader',
-					'sass-loader'
-				]
-			}
-		]
-	},
+  if (env === 'production') {
+    config.plugins.push(new webpack.BannerPlugin({banner: `Created: ${new Date().toUTCString()}`, raw: false, entryOnly: false}));
 
-	plugins: [
-		new CleanWebpackPlugin(
-			[
-				'theme/assets/js/app-*.js',
-				'theme/assets/js/theme-*.js',
-				'theme/assets/css/bundle-*.css',
-				'theme/assets/sw.js',
-				'theme/assets/precache-manifest.*.js'
-			],
-			{ verbose: false }
-		),
-		new MiniCssExtractPlugin({
-			filename: 'assets/css/bundle-[contenthash].css',
-			chunkFilename: 'assets/css/bundle-[contenthash].css'
-		}),
-		new HtmlWebpackPlugin({
-			template: 'theme/index.html',
-			inject: 'body',
-			filename: 'assets/index.html'
-		}),
-		new WorkboxPlugin.GenerateSW({
-			swDest: 'assets/sw.js',
-			precacheManifestFilename: 'assets/precache-manifest.[manifestHash].js',
-			clientsClaim: true,
-			skipWaiting: true,
-			exclude: [/\.html$/],
-			runtimeCaching: [
-				{
-					urlPattern: new RegExp('/(images|assets|admin-assets)/'),
-					handler: 'cacheFirst'
-				},
-				{
-					urlPattern: new RegExp('/api/'),
-					handler: 'networkOnly'
-				},
-				{
-					urlPattern: new RegExp('/ajax/payment_form_settings'),
-					handler: 'networkOnly'
-				},
-				{
-					urlPattern: new RegExp('/'),
-					handler: 'networkFirst',
-					options: {
-						networkTimeoutSeconds: 10
-					}
-				}
-			]
-		}),
-		new webpack.BannerPlugin({
-			banner: `Created: ${new Date().toUTCString()}`,
-			raw: false,
-			entryOnly: false
-		})
-	],
+    config.stats = {
+      colors: false,
+      hash: false,
+      version: false,
+      timings: false,
+      assets: false,
+      chunks: false,
+      modules: false,
+      reasons: false,
+      children: false,
+      source: false,
+      errors: false,
+      errorDetails: false,
+      warnings: false,
+      publicPath: false
+    }
+  }
 
-	stats: {
-		children: false,
-		entrypoints: false,
-		modules: false
-	}
-};
+  return config;
+}

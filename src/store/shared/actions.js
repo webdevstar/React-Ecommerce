@@ -1,394 +1,371 @@
-import * as t from './actionTypes';
-import { PAGE, PRODUCT_CATEGORY, PRODUCT, RESERVED, SEARCH } from './pageTypes';
-import queryString from 'query-string';
-import { animateScroll } from 'react-scroll';
-import api from '../client/api';
-import * as analytics from './analytics';
+import { push } from 'react-router-redux';
+import * as t from './actionTypes'
+import clientSettings from '../client/settings'
+import api from 'cezerin-client'
+api.initAjax(clientSettings.ajaxBaseUrl);
 
-const requestProduct = () => ({ type: t.PRODUCT_REQUEST });
+function receivePage(page) {
+  return {type: t.PAGE_RECEIVE, page}
+}
 
-const receiveProduct = product => ({ type: t.PRODUCT_RECEIVE, product });
+function receiveProducts(products) {
+  return {type: t.PRODUCTS_RECEIVE, products}
+}
 
-export const fetchProducts = () => async (dispatch, getState) => {
-	dispatch(requestProducts());
-	const { app } = getState();
-	const filter = getParsedProductFilter(app.productFilter);
-	const response = await api.ajax.products.list(filter);
-	const products = response.json;
-	dispatch(receiveProducts(null));
-	dispatch(receiveProducts(products));
-};
+function receiveProduct(product) {
+  return {type: t.PRODUCT_RECEIVE, product}
+}
 
-export const getProductFilterForCategory = (locationSearch, sortBy) => {
-	const queryFilter = queryString.parse(locationSearch);
+function receiveCategories(categories) {
+  return {type: t.CATEGORIES_RECEIVE, categories}
+}
 
-	let attributes = {};
-	for (const querykey in queryFilter) {
-		if (querykey.startsWith('attributes.')) {
-			attributes[querykey] = queryFilter[querykey];
-		}
-	}
+export function receiveSitemap(currentPage) {
+  return {type: t.SITEMAP_RECEIVE, currentPage}
+}
 
-	return {
-		priceFrom: parseInt(queryFilter.price_from || 0),
-		priceTo: parseInt(queryFilter.price_to || 0),
-		attributes: attributes,
-		search: null,
-		sort: sortBy
-	};
-};
+function setCurrentCategory(category) {
+  return {type: t.SET_CURRENT_CATEGORY, category}
+}
 
-export const getProductFilterForSearch = locationSearch => {
-	const queryFilter = queryString.parse(locationSearch);
+function resetCurrentCategory() {
+  return {type: t.SET_CURRENT_CATEGORY, category: null}
+}
 
-	return {
-		categoryId: null,
-		priceFrom: parseInt(queryFilter.price_from || 0),
-		priceTo: parseInt(queryFilter.price_to || 0),
-		search: queryFilter.search,
-		sort: 'search'
-	};
-};
+function receiveCart(cart) {
+  return {type: t.CART_RECEIVE, cart}
+}
 
-export const getParsedProductFilter = productFilter => {
-	const filter = Object.assign(
-		{},
-		{
-			on_sale: productFilter.onSale,
-			search: productFilter.search,
-			category_id: productFilter.categoryId,
-			price_from: productFilter.priceFrom,
-			price_to: productFilter.priceTo,
-			sort: productFilter['sort'],
-			fields: productFilter['fields'],
-			limit: productFilter['limit'],
-			offset: 0
-		},
-		productFilter.attributes
-	);
+function receivePaymentMethods(methods) {
+  return {type: t.PAYMENT_METHODS_RECEIVE, methods}
+}
 
-	return filter;
-};
+function requestPaymentMethods() {
+  return {type: t.PAYMENT_METHODS_REQUEST}
+}
 
-const requestProducts = () => ({ type: t.PRODUCTS_REQUEST });
+function receiveShippingMethods(methods) {
+  return {type: t.SHIPPING_METHODS_RECEIVE, methods}
+}
 
-const receiveProducts = products => ({ type: t.PRODUCTS_RECEIVE, products });
+function requestShippingMethods() {
+  return {type: t.SHIPPING_METHODS_REQUEST}
+}
 
-export const fetchMoreProducts = () => async (dispatch, getState) => {
-	const { app } = getState();
-	if (
-		app.loadingProducts ||
-		app.loadingMoreProducts ||
-		app.products.length === 0 ||
-		!app.productsHasMore
-	) {
-		return;
-	} else {
-		dispatch(requestMoreProducts());
+function receiveCheckout(order) {
+  return {type: t.CHECKOUT_RECEIVE, order}
+}
 
-		const filter = getParsedProductFilter(app.productFilter);
-		filter.offset = app.products.length;
+function requestCheckout() {
+  return {type: t.CHECKOUT_REQUEST}
+}
 
-		const response = await api.ajax.products.list(filter);
-		const products = response.json;
-		dispatch(receiveMoreProducts(products));
-		animateScroll.scrollMore(200);
-	}
-};
+export function setCategory(category_id) {
+  return (dispatch, getState) => {
+    const state = getState();
+    const category = state.app.categories.find(c => c.id === category_id);
+    dispatch(setCurrentCategory(category));
+    dispatch(fetchProducts());
+    dispatch(receiveProduct(null))
+  }
+}
 
-const requestMoreProducts = () => ({ type: t.MORE_PRODUCTS_REQUEST });
+export function fetchShippingMethods() {
+  return (dispatch, getState) => {
+    dispatch(requestShippingMethods())
+    return api.ajax.shipping_methods.list().then(({status, json}) => {
+      dispatch(receiveShippingMethods(json))
+    }).catch(error => {});
+  }
+}
 
-const receiveMoreProducts = products => ({
-	type: t.MORE_PRODUCTS_RECEIVE,
-	products
-});
+export function fetchPaymentMethods() {
+  return (dispatch, getState) => {
+    dispatch(requestPaymentMethods())
+    return api.ajax.payment_methods.list().then(({status, json}) => {
+      dispatch(receivePaymentMethods(json))
+    }).catch(error => {});
+  }
+}
 
-const requestPage = () => ({ type: t.PAGE_REQUEST });
+export function fetchCart() {
+  return (dispatch, getState) => {
+    return api.ajax.cart.retrieve().then(({status, json}) => {
+      dispatch(receiveCart(json))
+    }).catch(error => {});
+  }
+}
 
-const receivePage = pageDetails => ({ type: t.PAGE_RECEIVE, pageDetails });
+export function addCartItem(item) {
+  return (dispatch, getState) => {
+    return api.ajax.cart.addItem(item).then(({status, json}) => {
+      dispatch(receiveCart(json))
+    }).catch(error => {});
+  }
+}
 
-export const fetchCart = () => async (dispatch, getState) => {
-	dispatch(requestCart());
-	const response = await api.ajax.cart.retrieve();
-	const cart = response.json;
-	dispatch(receiveCart(cart));
-};
+export function updateCartItemQuantiry(item_id, quantity) {
+  return (dispatch, getState) => {
+    return api.ajax.cart.updateItem(item_id, {quantity: quantity}).then(({status, json}) => {
+      dispatch(receiveCart(json))
+      dispatch(fetchShippingMethods())
+    }).catch(error => {});
+  }
+}
 
-const requestCart = () => ({ type: t.CART_REQUEST });
+export function deleteCartItem(item_id) {
+  return (dispatch, getState) => {
+    return api.ajax.cart.deleteItem(item_id).then(({status, json}) => {
+      dispatch(receiveCart(json))
+      dispatch(fetchShippingMethods())
+    }).catch(error => {});
+  }
+}
 
-const receiveCart = cart => ({ type: t.CART_RECEIVE, cart });
+export function updateCartShippingCountry(country) {
+  return (dispatch, getState) => {
+    return [
+      api.ajax.cart.updateShippingAddress({
+        country: country
+      }),
+      api.ajax.cart.update({
+        payment_method_id: null,
+        shipping_method_id: null
+      })
+    ].reduce((p, fn) => p.then(() => fn), Promise.resolve()).then(({status, json}) => {
+      dispatch(receiveCart(json))
+      dispatch(fetchShippingMethods())
+      dispatch(fetchPaymentMethods())
+    }).catch(error => {});
+  }
+}
 
-export const addCartItem = item => async (dispatch, getState) => {
-	dispatch(requestAddCartItem());
-	const response = await api.ajax.cart.addItem(item);
-	const cart = response.json;
-	dispatch(receiveCart(cart));
-	analytics.addCartItem({
-		item: item,
-		cart: cart
-	});
-};
+export function updateCartShippingState(state) {
+  return (dispatch, getState) => {
+    return [
+      api.ajax.cart.updateShippingAddress({
+        state: state
+      }),
+      api.ajax.cart.update({
+        payment_method_id: null,
+        shipping_method_id: null
+      })
+    ].reduce((p, fn) => p.then(() => fn), Promise.resolve()).then(({status, json}) => {
+      dispatch(receiveCart(json))
+      dispatch(fetchShippingMethods())
+      dispatch(fetchPaymentMethods())
+    }).catch(error => {});
+  }
+}
 
-const requestAddCartItem = () => ({ type: t.CART_ITEM_ADD_REQUEST });
+export function updateCartShippingCity(city) {
+  return (dispatch, getState) => {
+    return [
+      api.ajax.cart.updateShippingAddress({
+        city: city
+      }),
+      api.ajax.cart.update({
+        payment_method_id: null,
+        shipping_method_id: null
+      })
+    ].reduce((p, fn) => p.then(() => fn), Promise.resolve()).then(({status, json}) => {
+      dispatch(receiveCart(json))
+      dispatch(fetchShippingMethods())
+      dispatch(fetchPaymentMethods())
+    }).catch(error => {});
+  }
+}
 
-export const updateCartItemQuantiry = (item_id, quantity) => async (
-	dispatch,
-	getState
-) => {
-	dispatch(requestUpdateCartItemQuantiry());
-	const response = await api.ajax.cart.updateItem(item_id, {
-		quantity: quantity
-	});
-	dispatch(receiveCart(response.json));
-	dispatch(fetchShippingMethods());
-};
+export function updateCartShippingMethod(method_id) {
+  return (dispatch, getState) => {
+    api.ajax.cart.update({
+      payment_method_id: null,
+      shipping_method_id: method_id
+    }).then(({status, json}) => {
+      dispatch(receiveCart(json))
+      dispatch(fetchPaymentMethods())
+    }).catch(error => {});
+  }
+}
 
-const requestUpdateCartItemQuantiry = () => ({
-	type: t.CART_ITEM_UPDATE_REQUEST
-});
+export function updateCartPaymentMethod(method_id) {
+  return (dispatch, getState) => {
+    api.ajax.cart.update({
+      payment_method_id: method_id
+    }).then(({status, json}) => {
+      dispatch(receiveCart(json))
+    }).catch(error => {});
+  }
+}
 
-export const deleteCartItem = item_id => async (dispatch, getState) => {
-	dispatch(requestDeleteCartItem());
-	const { app } = getState();
-	const response = await api.ajax.cart.deleteItem(item_id);
-	dispatch(receiveCart(response.json));
-	dispatch(fetchShippingMethods());
-	analytics.deleteCartItem({
-		itemId: item_id,
-		cart: app.cart
-	});
-};
+export function updateCart(cart) {
+  return (dispatch, getState) => {
+    return [
+      api.ajax.cart.updateShippingAddress(cart.shipping_address),
+      api.ajax.cart.updateBillingAddress(cart.billing_address),
+      api.ajax.cart.update({
+        email: cart.email,
+        mobile: cart.mobile,
+        payment_method_id: cart.payment_method_id,
+        shipping_method_id: cart.shipping_method_id
+        // coupon: cart.coupon
+      })
+    ].reduce((p, fn) => p.then(() => fn), Promise.resolve()).then(({status, json}) => {
+      dispatch(receiveCart(json))
+      dispatch(fetchShippingMethods())
+      dispatch(fetchPaymentMethods())
+    }).catch(error => {});
+  }
+}
 
-const requestDeleteCartItem = () => ({ type: t.CART_ITEM_DELETE_REQUEST });
+export function checkout(cart) {
+  return (dispatch, getState) => {
+    dispatch(requestCheckout())
+    return [
+      api.ajax.cart.updateShippingAddress(cart.shipping_address),
+      api.ajax.cart.updateBillingAddress(cart.billing_address),
+      api.ajax.cart.update({
+        email: cart.email,
+        mobile: cart.mobile,
+        payment_method_id: cart.payment_method_id,
+        shipping_method_id: cart.shipping_method_id,
+        draft: false
+        // coupon: cart.coupon
+      }),
+      api.ajax.cart.checkout()
+    ].reduce((p, fn) => p.then(() => fn), Promise.resolve()).then(({status, json}) => {
+      dispatch(receiveCheckout(json))
+      dispatch(push('/checkout-success'));
+    }).catch(error => {});
+  }
+}
 
-export const fetchPaymentMethods = () => async (dispatch, getState) => {
-	dispatch(requestPaymentMethods());
-	const response = await api.ajax.paymentMethods.list();
-	dispatch(receivePaymentMethods(response.json));
-};
+export function fetchCategories() {
+  return (dispatch, getState) => {
+    return api.ajax.product_categories.list({ enabled: true }).then(({status, json}) => {
+      dispatch(receiveCategories(json))
+    }).catch(error => {});
+  }
+}
 
-const requestPaymentMethods = () => ({ type: t.PAYMENT_METHODS_REQUEST });
+export function fetchProduct(product_id) {
+  return (dispatch, getState) => {
+    return api.ajax.products.retrieve(product_id).then(({status, json}) => {
+      dispatch(receiveProduct(json))
+    }).catch(error => {});
+  }
+}
 
-const receivePaymentMethods = methods => ({
-	type: t.PAYMENT_METHODS_RECEIVE,
-	methods
-});
+export function fetchProducts() {
+  return (dispatch, getState) => {
+    const state = getState();
 
-export const fetchShippingMethods = () => async (dispatch, getState) => {
-	dispatch(requestShippingMethods());
-	const response = await api.ajax.shippingMethods.list();
-	dispatch(receiveShippingMethods(response.json));
-};
+    let filter = state.app.productsFilter;
+    filter.thumbnail_width = 320,
+    filter.enabled = true;
+    filter.category_id = state.app.currentCategory.id;
+    filter.fields = 'path,id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price';
 
-const requestShippingMethods = () => ({ type: t.SHIPPING_METHODS_REQUEST });
+    return api.ajax.products.list(filter).then(({status, json}) => {
+      dispatch(receiveProducts(json))
+    }).catch(error => {});
+  }
+}
 
-const receiveShippingMethods = methods => ({
-	type: t.SHIPPING_METHODS_RECEIVE,
-	methods
-});
+export function fetchPage(pageId) {
+  return (dispatch, getState) => {
+    return api.ajax.pages.retrieve(pageId).then(({status, json}) => {
+      dispatch(receivePage(json))
+    }).catch(error => {});
+  }
+}
 
-export const checkout = (cart, history) => async (dispatch, getState) => {
-	dispatch(requestCheckout());
-	if (cart) {
-		await api.ajax.cart.update({
-			shipping_address: cart.shipping_address,
-			billing_address: cart.billing_address,
-			email: cart.email,
-			mobile: cart.mobile,
-			payment_method_id: cart.payment_method_id,
-			shipping_method_id: cart.shipping_method_id,
-			comments: cart.comments
-		});
-	}
+const getCategories = () => {
+  return api.ajax.product_categories.list({ enabled: true }).then(({status, json}) => json)
+}
 
-	const cartResponse = await api.ajax.cart.retrieve();
-	const chargeNeeded = !!cartResponse.json.payment_token;
+const getProducts = (filter) => {
+  return api.ajax.products.list(filter).then(({status, json}) => json)
+}
 
-	if (chargeNeeded) {
-		const chargeResponse = await api.ajax.cart.client.post('/cart/charge');
-		const chargeSucceeded = chargeResponse.status === 200;
-		if (!chargeSucceeded) {
-			return;
-		}
-	}
+const getProduct = (currentPage) => {
+  if (currentPage.type === 'product') {
+    return api.ajax.products.retrieve(currentPage.resource).then(({status, json}) => json)
+  } else {
+    return Promise.resolve();
+  }
+}
 
-	const response = await api.ajax.cart.checkout();
-	const order = response.json;
-	dispatch(receiveCheckout(order));
-	history.push('/checkout-success');
-	analytics.checkoutSuccess({ order: order });
-};
+const getCart = (cookie) => {
+  return api.ajax.cart.retrieve(cookie).then(({status, json}) => json)
+}
 
-const requestCheckout = () => ({ type: t.CHECKOUT_REQUEST });
+const getPage = (currentPage) => {
+  if (currentPage.type === 'page') {
+    return api.ajax.pages.retrieve(currentPage.resource).then(pageResponse => {
+      return pageResponse.json;
+    })
+  } else {
+    return Promise.resolve({});
+  }
+}
 
-const receiveCheckout = order => ({ type: t.CHECKOUT_RECEIVE, order });
+const getCommonData = (req, currentPage, productsFilter) => {
+  const cookie = req.get('cookie');
+  return Promise.all([
+    getCategories(),
+    getProduct(currentPage),
+    getProducts(productsFilter),
+    getCart(cookie),
+    getPage(currentPage)]).then(([categories, product, products, cart, page]) => {
+      let currentCategory = null;
+      if (currentPage.type === 'product-category') {
+        currentCategory = categories.find(c => c.id === currentPage.resource);
+      }
+      return {categories, product, products, currentCategory, cart, page}
+  });
+}
 
-export const receiveSitemap = currentPage => ({
-	type: t.SITEMAP_RECEIVE,
-	currentPage
-});
+export const getInitialState = (req, checkout_fields, currentPage) => {
+  let initialState = {
+    app: {
+      language: 'en',
+      location: null,
+      currentPage: currentPage,
+      currentCategory: null,
+      currentProduct: null,
+      categories: [],
+      products: [],
+      payment_methods: [],
+      shipping_methods: [],
+      page: {},
+      loadingShippingMethods: false,
+      loadingPaymentMethods: false,
+      processingCheckout: false,
+      cart: null,
+      order: null,
+      productsFilter: {
+        limit: 20,
+        thumbnail_width: 320,
+        enabled: true,
+        fields: 'path,id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price'
+      },
+      checkout_fields: checkout_fields
+    }
+  }
 
-export const setCurrentLocation = location => ({
-	type: t.LOCATION_CHANGED,
-	location
-});
+  if (currentPage.type === 'product-category') {
+    initialState.app.productsFilter.category_id = currentPage.resource;
+  }
 
-export const setCategory = categoryId => (dispatch, getState) => {
-	const { app } = getState();
-	const category = app.categories.find(c => c.id === categoryId);
-	if (category) {
-		dispatch(setCurrentCategory(category));
-		dispatch(setProductsFilter({ categoryId: categoryId }));
-		dispatch(receiveProduct(null));
-	}
-};
+  return getCommonData(req, currentPage, initialState.app.productsFilter).then(commonData => {
+    initialState.app.categories = commonData.categories;
+    initialState.app.currentProduct = commonData.product;
+    initialState.app.products = commonData.products;
+    initialState.app.currentCategory = commonData.currentCategory;
+    initialState.app.cart = commonData.cart;
+    initialState.app.page = commonData.page;
+    return initialState;
+  })
 
-const setCurrentCategory = category => ({
-	type: t.SET_CURRENT_CATEGORY,
-	category
-});
-
-export const setSort = sort => (dispatch, getState) => {
-	dispatch(setProductsFilter({ sort: sort }));
-	dispatch(fetchProducts());
-};
-
-const setProductsFilter = filter => ({
-	type: t.SET_PRODUCTS_FILTER,
-	filter: filter
-});
-
-export const analyticsSetShippingMethod = method_id => (dispatch, getState) => {
-	const { app } = getState();
-	analytics.setShippingMethod({
-		methodId: method_id,
-		allMethods: app.shippingMethods
-	});
-};
-
-export const analyticsSetPaymentMethod = method_id => (dispatch, getState) => {
-	const { app } = getState();
-	analytics.setPaymentMethod({
-		methodId: method_id,
-		allMethods: app.paymentMethods
-	});
-};
-
-export const updateCart = (data, callback) => async (dispatch, getState) => {
-	const response = await api.ajax.cart.update(data);
-	const newCart = response.json;
-	dispatch(receiveCart(newCart));
-	if (typeof callback === 'function') {
-		callback(newCart);
-	}
-};
-
-export const setCurrentPage = location => async (dispatch, getState) => {
-	let locationPathname = '/404';
-	let locationSearch = '';
-	let locationHash = '';
-
-	if (location) {
-		locationPathname = location.pathname;
-		locationSearch = location.search;
-		locationHash = location.hash;
-	}
-
-	const { app } = getState();
-	let statePathname = '/404';
-	let stateSearch = '';
-	let stateHash = '';
-
-	if (app.location) {
-		statePathname = app.location.pathname;
-		stateSearch = app.location.search;
-		stateHash = app.location.hash;
-	}
-
-	const currentPageAlreadyInState =
-		statePathname === locationPathname && stateSearch === locationSearch;
-
-	if (currentPageAlreadyInState) {
-		// same page
-	} else {
-		dispatch(
-			setCurrentLocation({
-				hasHistory: true,
-				pathname: locationPathname,
-				search: locationSearch,
-				hash: locationHash
-			})
-		);
-
-		const category = app.categories.find(c => c.path === locationPathname);
-		if (category) {
-			const newCurrentPage = {
-				type: 'product-category',
-				path: category.path,
-				resource: category.id
-			};
-			dispatch(receiveSitemap(newCurrentPage)); // remove .data
-			dispatch(fetchDataOnCurrentPageChange(newCurrentPage));
-		} else {
-			const sitemapResponse = await api.ajax.sitemap.retrieve({
-				path: locationPathname
-			});
-			if (sitemapResponse.status === 404) {
-				dispatch(
-					receiveSitemap({
-						type: 404,
-						path: locationPathname,
-						resource: null
-					})
-				);
-			} else {
-				const newCurrentPage = sitemapResponse.json;
-				dispatch(receiveSitemap(newCurrentPage));
-				dispatch(fetchDataOnCurrentPageChange(newCurrentPage));
-			}
-		}
-	}
-};
-
-const fetchDataOnCurrentPageChange = currentPage => (dispatch, getState) => {
-	const { app } = getState();
-	let productFilter = null;
-
-	// clear product data
-	dispatch(receiveProduct(null));
-
-	analytics.pageView({
-		path: currentPage.path,
-		title: '-'
-	});
-
-	switch (currentPage.type) {
-		case PRODUCT_CATEGORY:
-			productFilter = getProductFilterForCategory(
-				app.location.search,
-				app.settings.default_product_sorting
-			);
-			dispatch(setCategory(currentPage.resource));
-			dispatch(setProductsFilter(productFilter));
-			dispatch(fetchProducts());
-			break;
-		case SEARCH:
-			productFilter = getProductFilterForSearch(app.location.search);
-			dispatch(setProductsFilter(productFilter));
-			dispatch(fetchProducts());
-			analytics.search({ searchText: productFilter.search });
-			break;
-		case PRODUCT:
-			const productData = currentPage.data;
-			dispatch(receiveProduct(productData));
-			analytics.productView({ product: productData });
-			break;
-		case PAGE:
-			const pageData = currentPage.data;
-			dispatch(receivePage(pageData));
-			if (currentPage.path === '/checkout') {
-				analytics.checkoutView({ order: app.cart });
-			}
-			break;
-	}
-};
+}

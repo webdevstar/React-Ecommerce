@@ -1,1 +1,1 @@
-export default APPLICATION_CONFIG;
+module.exports = APPLICATION_CONFIG;

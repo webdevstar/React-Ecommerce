@@ -1,0 +1,8 @@
+export {default as SharedContainer} from './containers/shared'
+export {default as IndexContainer} from './containers/index'
+export {default as CategoryContainer} from './containers/category'
+export {default as ProductContainer} from './containers/product'
+export {default as NotFoundContainer} from './containers/notfound'
+export {default as CustomPageContainer} from './containers/customPage'
+export {default as ChechoutContainer} from './containers/checkout'
+export {default as ChechoutSuccessContainer} from './containers/checkoutSuccess'

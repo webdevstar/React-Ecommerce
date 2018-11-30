@@ -1,48 +1,22 @@
-import winston from 'winston';
-import url from 'url';
-import { MongoClient } from 'mongodb';
-import settings from './settings';
+var settings = require('./settings');
+var mongo = require('mongodb').MongoClient;
+var mongodbConnection = settings.mongodbServerUrl;
+var db;
 
-const mongodbConnection = settings.mongodbServerUrl;
-const mongoPathName = url.parse(mongodbConnection).pathname;
-const dbName = mongoPathName.substring(mongoPathName.lastIndexOf('/') + 1);
+// Initialize connection once
+const connect = () => {
+  return new Promise((resolve, reject) => {
+    mongo.connect(mongodbConnection, (err, database) => {
+        if(err){
+          reject(err)
+        } else {
+          module.exports.db = db = database;
+          resolve();
+        }
+    });
+  })
+}
 
-const RECONNECT_INTERVAL = 1000;
-const CONNECT_OPTIONS = {
-	reconnectTries: 3600,
-	reconnectInterval: RECONNECT_INTERVAL,
-	useNewUrlParser: true
+module.exports = {
+  connect: connect
 };
-
-const onClose = () => {
-	winston.info('MongoDB connection was closed');
-};
-
-const onReconnect = () => {
-	winston.info('MongoDB reconnected');
-};
-
-export let db = null;
-
-const connectWithRetry = () => {
-	MongoClient.connect(
-		mongodbConnection,
-		CONNECT_OPTIONS,
-		(err, client) => {
-			if (err) {
-				winston.error(
-					`MongoDB connection was failed: ${err.message}`,
-					err.message
-				);
-				setTimeout(connectWithRetry, RECONNECT_INTERVAL);
-			} else {
-				db = client.db(dbName);
-				db.on('close', onClose);
-				db.on('reconnect', onReconnect);
-				winston.info('MongoDB connected successfully');
-			}
-		}
-	);
-};
-
-connectWithRetry();

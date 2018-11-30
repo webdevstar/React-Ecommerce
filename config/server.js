@@ -1,67 +1,47 @@
-// config used by server side only
-const dbHost = process.env.DB_HOST || '127.0.0.1';
-const dbPort = process.env.DB_PORT || 27017;
-const dbName = process.env.DB_NAME || 'shop';
-const dbUser = process.env.DB_USER || '';
-const dbPass = process.env.DB_PASS || '';
-const dbCred =
-	dbUser.length > 0 || dbPass.length > 0 ? `${dbUser}:${dbPass}@` : '';
-
-const dbUrl =
-	process.env.DB_URL || `mongodb://${dbCred}${dbHost}:${dbPort}/${dbName}`;
+const baseUrl = 'http://localhost:3000';
+const uploadRootDir = '/var/www/cezerin/public/static';
 
 module.exports = {
-	// used by Store (server side)
-	apiBaseUrl: `http://localhost:3001/api/v1`,
+  storeBaseUrl: baseUrl,
+  adminLoginUrl: `${baseUrl}/admin/login`,
+  apiBaseUrl: `${baseUrl}/api/v1`,
 
-	// used by Store (server and client side)
-	ajaxBaseUrl: `http://localhost:3001/ajax`,
+  nodeServerPort: 3000,
+  nodeServerHost: '127.0.0.1',
+  mongodbServerUrl: 'mongodb://<user>:<pass>@<ip>:<port>/<db>',
+  orderStartNumber: 1000,
 
-	// Access-Control-Allow-Origin
-	storeBaseUrl: `http://localhost:3000`,
+  cartCookieOptions: {
+    maxAge: 604800000,
+    httpOnly: true,
+    signed: true,
+    secure: false,
+    sameSite: 'strict'
+  },
 
-	// used by API
-	adminLoginUrl: '/admin/login',
+  referrerCookieOptions: {
+    maxAge: 604800000,
+    httpOnly: true,
+    signed: true,
+    secure: false,
+    sameSite: 'strict'
+  },
 
-	apiListenPort: 3001,
-	storeListenPort: 3000,
+  security: {
+    jwtSecret: '---',
+    cookieKey: '---',
+    token: '---'
+  },
 
-	// used by API
-	mongodbServerUrl: dbUrl,
+  path: {
+    categories: `${uploadRootDir}/categories`,
+    products: `${uploadRootDir}/products`,
+    files: `${uploadRootDir}/files`
+  },
 
-	smtpServer: {
-		host: '',
-		port: 0,
-		secure: true,
-		user: '',
-		pass: '',
-		fromName: '',
-		fromAddress: ''
-	},
-
-	// key to sign tokens
-	jwtSecretKey: '-',
-
-	// key to sign store cookies
-	cookieSecretKey: '-',
-
-	// path to uploads
-	categoriesUploadPath: 'public/content/images/categories',
-	productsUploadPath: 'public/content/images/products',
-	filesUploadPath: 'public/content',
-	themeAssetsUploadPath: 'theme/assets/images',
-
-	// url to uploads
-	categoriesUploadUrl: '/images/categories',
-	productsUploadUrl: '/images/products',
-	filesUploadUrl: '',
-	themeAssetsUploadUrl: '/assets/images',
-
-	// store UI language
-	language: 'en',
-
-	// used by API
-	orderStartNumber: 1000,
-
-	developerMode: true
-};
+  url: {
+    categories: `${baseUrl}/static/categories`,
+    products: `${baseUrl}/static/products`,
+    files: `${baseUrl}/static/files`
+  }
+}

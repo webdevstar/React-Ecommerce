@@ -1,54 +1,113 @@
-import express from 'express';
-import helmet from 'helmet';
-import responseTime from 'response-time';
-import path from 'path';
-import cookieParser from 'cookie-parser';
 import winston from 'winston';
-import settings from '../../../config/server';
-import logger from './logger';
-import robotsRendering from './robotsRendering';
-import sitemapRendering from './sitemapRendering';
-import redirects from './redirects';
-import pageRendering from './pageRendering';
+import express from 'express';
+let storeRouter = express.Router();
 
-const app = express();
+import api from 'cezerin-client';
+api.initAjax(clientSettings.ajaxBaseUrl);
+api.init(serverSettings.apiBaseUrl, serverSettings.security.token);
 
-const ADMIN_INDEX_PATH = path.resolve('public/admin/index.html');
-const STATIC_OPTIONS = {
-	maxAge: 31536000000 // One year
-};
+import React from 'react'
+import {match, RouterContext} from 'react-router'
+import {renderToString} from 'react-dom/server'
+import {createStore, applyMiddleware} from 'redux'
+import thunkMiddleware from 'redux-thunk'
+import {Provider} from 'react-redux'
+import Helmet from 'react-helmet'
+import createRoutes from '../shared/routes'
+import reducers from '../shared/reducers'
+import {getInitialState} from '../shared/actions'
+import clientSettings from '../client/settings'
+import serverSettings from './settings'
+import { readIndexHtmlFile } from './theme.js'
 
-app.set('trust proxy', 1);
-app.use(helmet());
-app.get('/images/:entity/:id/:size/:filename', (req, res, next) => {
-	// A stub of image resizing (can be done with Nginx)
-	const newUrl = `/images/${req.params.entity}/${req.params.id}/${
-		req.params.filename
-	}`;
-	req.url = newUrl;
-	next();
+const getHead = () => {
+  const helmet = Helmet.rewind();
+  return {
+    title: helmet.title.toString(),
+    meta: helmet.meta.toString(),
+    link: helmet.link.toString(),
+    script: helmet.script.toString(),
+    style: helmet.style.toString(),
+    htmlAttributes: helmet.htmlAttributes.toString(),
+    base: helmet.base.toString(),
+    noscript: helmet.noscript.toString()
+  }
+}
+
+const renderHtml = (req, res, renderProps, store, templateHtml, httpStatusCode) => {
+  const full_url = `${req.protocol}://${req.hostname}${req.url}`;
+  const referrer_url = req.get('referrer') === undefined ? '' : req.get('referrer');
+
+  const {location, params, history} = renderProps;
+  const contentHtml = renderToString(
+    <Provider store={store}>
+      <RouterContext {...renderProps}/>
+    </Provider>
+  )
+
+  const state = store.getState();
+  const head = getHead();
+  const html = templateHtml
+  .replace('{language}', clientSettings.language)
+  .replace('{title}', head.title).replace('{meta}', head.meta).replace('{link}', head.link)
+  .replace('{script}', head.script).replace('{state}', JSON.stringify(state)).replace('{content}', contentHtml);
+
+  if(!req.signedCookies.referrer_url) {
+    res.cookie('referrer_url', referrer_url, serverSettings.referrerCookieOptions);
+  }
+
+  if(!req.signedCookies.landing_url) {
+    res.cookie('landing_url', full_url, serverSettings.referrerCookieOptions);
+  }
+
+  res.status(httpStatusCode).send(html);
+}
+
+const sendPageError = (res, status, err) => {
+  winston.error('Page error', err);
+  res.status(status).send(err);
+}
+
+storeRouter.get('*', (req, res, next) => {
+  Promise.all([
+    readIndexHtmlFile(),
+    api.sitemap.retrieve({ path: req.path, enabled: true }),
+    api.checkout_fields.list()
+  ]).then(([templateHtml, sitemapDetails, checkout_fields]) => {
+    if (sitemapDetails.status === 200 || sitemapDetails.status === 404) {
+      let currentPage = sitemapDetails.json;
+      if(sitemapDetails.status === 404) {
+        currentPage = {
+          type: 404,
+          resource: null
+        }
+      }
+
+      getInitialState(req, checkout_fields.json, currentPage).then(initialState => {
+        const store = createStore(reducers, initialState, applyMiddleware(thunkMiddleware));
+        const routes = createRoutes(store);
+
+        match({
+          routes,
+          location: req.path
+        }, (error, redirectLocation, renderProps) => {
+          if (error) {
+            sendPageError(res, 500, error.message)
+          } else if (redirectLocation) {
+            res.redirect(302, redirectLocation.pathname + redirectLocation.search)
+          } else if (renderProps) {
+            renderHtml(req, res, renderProps, store, templateHtml, sitemapDetails.status);
+          } else {
+            winston.error('Route not found', req.path);
+          }
+        });
+      })
+    } else {
+     sendPageError(res, sitemapDetails.status, sitemapDetails.json.message)
+   }
+ }).catch(err => {
+   sendPageError(res, 500, err)
+ });
 });
-app.use(express.static('public/content', STATIC_OPTIONS));
-app.use('/assets', express.static('theme/assets', STATIC_OPTIONS));
-app.use('/admin-assets', express.static('public/admin-assets', STATIC_OPTIONS));
-app.use('/sw.js', express.static('theme/assets/sw.js'));
-app.use('/admin', (req, res) => {
-	res.sendFile(ADMIN_INDEX_PATH);
-});
-app.get(
-	/^.+\.(jpg|jpeg|gif|png|bmp|ico|webp|svg|css|js|zip|rar|flv|swf|xls)$/,
-	(req, res) => {
-		res.status(404).end();
-	}
-);
-app.get('/robots.txt', robotsRendering);
-app.get('/sitemap.xml', sitemapRendering);
-app.get('*', redirects);
-app.use(responseTime());
-app.use(cookieParser(settings.cookieSecretKey));
-app.get('*', pageRendering);
 
-const server = app.listen(settings.storeListenPort, () => {
-	const serverAddress = server.address();
-	winston.info(`Store running at http://localhost:${serverAddress.port}`);
-});
+module.exports = storeRouter;
