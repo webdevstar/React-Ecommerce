@@ -4,9 +4,14 @@ import serverSettings from './settings'
 import api from 'cezerin-client';
 api.init(serverSettings.apiBaseUrl, serverSettings.security.token);
 
+const DEFAULT_CACHE_CONTROL = 'public, max-age=600';
+const PRODUCTS_CACHE_CONTROL = 'public, max-age=60';
+
 ajaxRouter.get('/products', (req, res, next) => {
-  api.products.list(req.query).then(({status, json}) => {
-    res.status(status).send(json);
+  const filter = req.query;
+  filter.enabled = true;
+  api.products.list(filter).then(({status, json}) => {
+    res.status(status).header('Cache-Control', PRODUCTS_CACHE_CONTROL).send(json);
   })
 })
 
@@ -135,25 +140,27 @@ ajaxRouter.put('/cart/billing_address', (req, res, next) => {
 
 ajaxRouter.get('/product_categories', (req, res, next) => {
   api.product_categories.list(req.query).then(({status, json}) => {
-    res.status(status).send(json);
+    res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
   })
 })
 
 ajaxRouter.get('/product_categories/:id', (req, res, next) => {
   api.product_categories.retrieve(req.params.id).then(({status, json}) => {
-    res.status(status).send(json);
+    res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
   })
 })
 
 ajaxRouter.get('/pages/:id', (req, res, next) => {
   api.pages.retrieve(req.params.id).then(({status, json}) => {
-    res.status(status).send(json);
+    res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
   })
 })
 
 ajaxRouter.get('/sitemap', (req, res, next) => {
+  const filter = req.query;
+  filter.enabled = true;
   api.sitemap.retrieve(req.query).then(({status, json}) => {
-    res.status(status).send(json);
+    res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
   })
 })
 
@@ -177,7 +184,7 @@ ajaxRouter.get('/shipping_methods', (req, res, next) => {
 
 ajaxRouter.get('/countries', (req, res, next) => {
   api.countries.list().then(({status, json}) => {
-    res.status(status).send(json);
+    res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
   })
 })
 
