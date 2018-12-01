@@ -7,6 +7,29 @@ api.init(serverSettings.apiBaseUrl, serverSettings.security.token);
 const DEFAULT_CACHE_CONTROL = 'public, max-age=600';
 const PRODUCTS_CACHE_CONTROL = 'public, max-age=60';
 
+const fillCartItemWithProductData = (products, cartItem) => {
+  const product = products.find(p => p.id === cartItem.product_id);
+  if(product) {
+    cartItem.image_url = product.images.length > 0 ? product.images[0].url : null;
+    cartItem.stock_quantity = product.stock_quantity;
+  }
+  return cartItem;
+}
+
+const fillCartItems = (cartResponse) => {
+  let cart = cartResponse.json;
+  if(cart && cart.items && cart.items.length > 0) {
+    const productIds = cart.items.map(item => item.product_id);
+    return api.products.list({ ids: productIds, fields: 'images,enabled,stock_quantity' }).then(({status, json}) => {
+      const newCartItem = cart.items.map(cartItem => fillCartItemWithProductData(json, cartItem))
+      cartResponse.json.items = newCartItem;
+      return cartResponse;
+    })
+  } else {
+    return Promise.resolve(cartResponse)
+  }
+}
+
 ajaxRouter.get('/products', (req, res, next) => {
   const filter = req.query;
   filter.enabled = true;
@@ -24,7 +47,7 @@ ajaxRouter.get('/products/:id', (req, res, next) => {
 ajaxRouter.get('/cart', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   if (order_id) {
-    api.orders.retrieve(order_id).then(({status, json}) => {
+    api.orders.retrieve(order_id).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.status(status).send(json);
     })
   } else {
@@ -36,7 +59,7 @@ ajaxRouter.post('/cart/items', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   const item = req.body;
   if (order_id) {
-    api.orders.addItem(order_id, item).then(({status, json}) => {
+    api.orders.addItem(order_id, item).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.status(status).send(json);
     })
   } else {
@@ -61,7 +84,7 @@ ajaxRouter.post('/cart/items', (req, res, next) => {
       }
     }).then(({status, json}) => {
       res.cookie('order_id', json.id, serverSettings.cartCookieOptions);
-      api.orders.addItem(json.id, item).then(({status, json}) => {
+      api.orders.addItem(json.id, item).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
         res.status(status).send(json);
       })
     })
@@ -72,7 +95,7 @@ ajaxRouter.delete('/cart/items/:item_id', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   const item_id = req.params.item_id;
   if (order_id && item_id) {
-    api.orders.deleteItem(order_id, item_id).then(({status, json}) => {
+    api.orders.deleteItem(order_id, item_id).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.status(status).send(json);
     })
   } else {
@@ -85,7 +108,7 @@ ajaxRouter.put('/cart/items/:item_id', (req, res, next) => {
   const item_id = req.params.item_id;
   const item = req.body;
   if (order_id && item_id) {
-    api.orders.updateItem(order_id, item_id, item).then(({status, json}) => {
+    api.orders.updateItem(order_id, item_id, item).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.status(status).send(json);
     })
   } else {
@@ -96,7 +119,7 @@ ajaxRouter.put('/cart/items/:item_id', (req, res, next) => {
 ajaxRouter.put('/cart/checkout', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   if (order_id) {
-    api.orders.checkout(order_id).then(({status, json}) => {
+    api.orders.checkout(order_id).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.clearCookie('order_id');
       res.status(status).send(json);
     })
@@ -108,7 +131,7 @@ ajaxRouter.put('/cart/checkout', (req, res, next) => {
 ajaxRouter.put('/cart', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   if (order_id) {
-    api.orders.update(order_id, req.body).then(({status, json}) => {
+    api.orders.update(order_id, req.body).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.status(status).send(json);
     })
   } else {
@@ -119,7 +142,7 @@ ajaxRouter.put('/cart', (req, res, next) => {
 ajaxRouter.put('/cart/shipping_address', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   if (order_id) {
-    api.orders.updateShippingAddress(order_id, req.body).then(({status, json}) => {
+    api.orders.updateShippingAddress(order_id, req.body).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.status(status).send(json);
     })
   } else {
@@ -130,7 +153,7 @@ ajaxRouter.put('/cart/shipping_address', (req, res, next) => {
 ajaxRouter.put('/cart/billing_address', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   if (order_id) {
-    api.orders.updateBillingAddress(order_id, req.body).then(({status, json}) => {
+    api.orders.updateBillingAddress(order_id, req.body).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
       res.status(status).send(json);
     })
   } else {
@@ -144,11 +167,11 @@ ajaxRouter.get('/product_categories', (req, res, next) => {
   })
 })
 
-ajaxRouter.get('/product_categories/:id', (req, res, next) => {
-  api.product_categories.retrieve(req.params.id).then(({status, json}) => {
-    res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
-  })
-})
+// ajaxRouter.get('/product_categories/:id', (req, res, next) => {
+//   api.product_categories.retrieve(req.params.id).then(({status, json}) => {
+//     res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
+//   })
+// })
 
 ajaxRouter.get('/pages/:id', (req, res, next) => {
   api.pages.retrieve(req.params.id).then(({status, json}) => {
@@ -182,11 +205,11 @@ ajaxRouter.get('/shipping_methods', (req, res, next) => {
   })
 })
 
-ajaxRouter.get('/countries', (req, res, next) => {
-  api.countries.list().then(({status, json}) => {
-    res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
-  })
-})
+// ajaxRouter.get('/countries', (req, res, next) => {
+//   api.countries.list().then(({status, json}) => {
+//     res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
+//   })
+// })
 
 ajaxRouter.all('*', (req, res, next) => {
   res.status(405).send({'error': 'Method Not Allowed'});

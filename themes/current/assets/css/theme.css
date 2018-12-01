@@ -4,15 +4,7 @@
 }
 
 .checkout-button {
-  color: #fff;
-  background-color: rgb(8, 179, 90);
-  border: none;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 14px 40px;
-  border-radius: 3px;
   text-transform: uppercase;
-  text-align: center;
 }
 
 .checkout-button:disabled {
@@ -21,7 +13,7 @@
 
 .checkout-button-wrap {
   text-align: center;
-  margin-bottom: 30px;
+  margin: 30px 0;
 }
 
 .checkout-field {
@@ -60,6 +52,8 @@
 
 .checkout-form h2 {
   font-size: 18px;
+  margin-bottom: 8px;
+  margin-top: 30px;
 }
 
 .shipping-methods, .payment-methods {
@@ -74,7 +68,7 @@
   flex-direction: row;
   justify-content: space-between;
   font-weight: normal;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e0e0e0;
   cursor: pointer;
   margin: 0;
@@ -92,7 +86,7 @@
   background-color: #f9f9f9;
 }
 
-.shipping-method small, .payment-method small {
+.shipping-method-description, .payment-method-description {
   font-size: 12px;
   color: #747679;
 }
@@ -101,7 +95,33 @@
   border-bottom: none;
 }
 
+.payment-method-name {
 
+}
+
+.shipping-method-name {
+
+}
+
+.shipping-method-rate {
+
+}
+
+.payment-method-logo {
+
+}
+
+.checkout-box {
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 4px;
+}
+
+hr.separator {
+  background-color: #eee;
+  height: 1px;
+  margin: 1rem 0;
+}
 
 .mini-cart {
   visibility: hidden;
@@ -135,4 +155,66 @@
 
 .mini-cart-item-price {
   padding-bottom: 6px
+}
+
+.product-old-price {
+  padding-right: 10px;
+}
+.product-new-price {
+  color: #FE4365;
+}
+
+.categories-tree {
+}
+.categories-tree ul {
+  margin: 0;
+  padding: 0;
+}
+.categories-tree ul ul {
+  display: none;
+}
+.categories-tree a.active + ul {
+  display: block;
+}
+.categories-tree li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.categories-tree li a {
+  color: #7a7a7a;
+  margin: 0;
+  padding: 0 0 0 .75em;
+  line-height: 1.9;
+  display: block;
+}
+.categories-tree li li a {
+  padding: 0 0 0 1.5em;
+}
+.categories-tree li li li a {
+  padding: 0 0 0 2.25em;
+}
+.categories-tree li li li li a {
+  padding: 0 0 0 3em;
+}
+.categories-tree li a.active {
+  color: #000;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.categories-tree li.active > ul {
+  display: block;
+}
+
+.sidebar {
+  z-index: 1000;
+  background: #fff;
+  overflow: auto;
+  transition: transform 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms;
+}
+
+.sidebar .categories-tree li a {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #333;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }

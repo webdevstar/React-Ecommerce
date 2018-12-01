@@ -1,7 +1,8 @@
 {
+  "addToCart": "Add to cart",
   "cart": "cart",
   "cartEmpty": "Your cart is empty",
-  "proceedToCheckout": "Proceed to checkout",
+  "proceedToCheckout": "Go to checkout",
   "subtotal": "Subtotal",
   "shipping": "Shipping",
   "discount": "Discount",
@@ -11,5 +12,13 @@
   "checkoutPageTitle": "Checkout",
   "grandTotal": "Grand total",
   "orderSummary": "Order Summary",
+  "checkoutSuccessTitle": "Thanks for your order!",
+  "checkoutSuccessText": "<p>Your order number is {order_number}.<p><p>We'll email your order details and tracking information.</p>",
+  "outOfStock": "Out of stock",
+  "inStock": "In Stock",
+  "discontinued": "Discontinued",
+  "relatedProducts": "Related products",
+  "filterProducts": "Filter products",
+  "sort": "Sort",
   "footerCopyright": "Copyright © 2017 Demo Drone Store. All Rights Reserved. EN. "
 }

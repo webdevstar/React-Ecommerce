@@ -6,7 +6,7 @@ import * as helper from '../lib/helper'
 const ProductsListItem = ({product, addCartItem, settings}) => {
   const imageUrl = (product.images && product.images.length > 0)
     ? helper.getThumbnailUrl(product.images[0].url, config.list_thumbnail_width)
-    : '/assets/images/placeholder.png';
+    : config.imagePlaceholder;
 
   return (
     <div className="column is-half-mobile is-one-third-tablet">
@@ -30,7 +30,7 @@ const ProductsList = ({products, addCartItem, settings}) => {
     return <ProductsListItem key={i} product={product} addCartItem={addCartItem} settings={settings}/>
   })
   return (
-    <div className="columns is-multiline is-mobile">
+    <div className="columns is-multiline is-mobile" style={{ alignItems: 'baseline' }}>
       {items}
     </div>
   )
