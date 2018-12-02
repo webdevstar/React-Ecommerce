@@ -24,6 +24,13 @@ function receiveProductError(error) {
   }
 }
 
+function receiveImages(images) {
+  return {
+    type: t.PRODUCT_IMAGES_RECEIVE,
+    images
+  }
+}
+
 export function cancelProductEdit() {
   return {
     type: t.PRODUCT_DETAIL_ERASE
@@ -208,6 +215,19 @@ export function fetchMoreProducts() {
   }
 }
 
+export function deleteCurrentProduct() {
+  return (dispatch, getState) => {
+    const state = getState();
+    let product = state.products.editProduct;
+    if(product && product.id) {
+      return api.products.delete(product.id).then(() => {
+        dispatch(fetchProducts());
+        dispatch(push('/admin/products'));
+      }).catch(err => { console.log(err) });
+    }
+  }
+}
+
 export function deleteProducts() {
   return (dispatch, getState) => {
     const state = getState();
@@ -237,6 +257,10 @@ export function setCategory(category_id) {
 export function updateProduct(data) {
   return (dispatch, getState) => {
     dispatch(requestUpdateProduct());
+
+    // don't overwrite images
+    delete data.images;
+
     return api.products.update(data.id, data).then(({status, json}) => {
         dispatch(receiveUpdateProduct(json));
         dispatch(fetchProducts());
@@ -285,10 +309,20 @@ export function fetchProduct(id) {
   }
 }
 
+export function fetchImages(productId) {
+  return (dispatch, getState) => {
+    return api.products.getImages(productId).then(({status, json}) => {
+      dispatch(receiveImages(json))
+    })
+    .catch(error => {});
+  }
+}
+
+
 export function deleteImage(productId, imageId) {
   return (dispatch, getState) => {
     return api.products.deleteImage(productId, imageId).then(({status, json}) => {
-      dispatch(fetchProduct(productId))
+      dispatch(fetchImages(productId))
     })
     .catch(error => {});
   }
@@ -297,7 +331,7 @@ export function deleteImage(productId, imageId) {
 export function updateImages(productId, images) {
   return (dispatch, getState) => {
     return api.products.update(productId, { images: images }).then(({status, json}) => {
-          dispatch(fetchProduct(productId))
+          dispatch(fetchImages(productId))
       })
       .catch(error => {});
   }
