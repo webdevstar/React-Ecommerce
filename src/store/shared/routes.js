@@ -2,7 +2,7 @@ import React from 'react'
 import {Route, IndexRoute} from 'react-router'
 import clientSettings from '../client/settings'
 import {fetchProduct, fetchProducts, fetchPage, setCategory, receiveSitemap} from './actions'
-import {PAGE, PRODUCT_CATEGORY, PRODUCT, RESERVED} from './pageTypes'
+import {PAGE, PRODUCT_CATEGORY, PRODUCT, RESERVED, SEARCH} from './pageTypes'
 
 import api from 'cezerin-client';
 api.initAjax(clientSettings.ajaxBaseUrl);
@@ -11,10 +11,11 @@ import IndexContainer from './containers/index'
 import SharedContainer from './containers/shared'
 import CategoryContainer from './containers/category'
 import ProductContainer from './containers/product'
-import CustomPageContainer from './containers/customPage'
+import PageContainer from './containers/page'
 import CheckoutContainer from './containers/checkout'
 import CheckoutSuccessContainer from './containers/checkoutSuccess'
 import NotFoundContainer from './containers/notfound'
+import SearchContainer from './containers/search'
 
 const getSitemap = (path, state, dispatch) => {
   const currentPageFromState = state.app.currentPage;
@@ -40,7 +41,10 @@ function getComponent(nextState, cb) {
   getSitemap(nextState.location.pathname, state, dispatch).then(({currentPage, currentPageAlreadyInState}) => {
     if (currentPage) {
       if (currentPage.type === PRODUCT_CATEGORY) {
-        if(!currentPageAlreadyInState){
+        const categoryAlreadyInState = currentPage.resource === state.app.productFilter.category_id;
+
+        if(currentPageAlreadyInState || categoryAlreadyInState){
+        } else {
           dispatch(setCategory(currentPage.resource))
           dispatch(fetchProducts());
         }
@@ -50,6 +54,8 @@ function getComponent(nextState, cb) {
           dispatch(fetchProduct(currentPage.resource))
         }
         cb(null, props => <ProductContainer {...props}/>);
+      } else if(currentPage.type === SEARCH) {
+        cb(null, props => <SearchContainer {...props}/>);
       } else if (currentPage.type === PAGE) {
         if(!currentPageAlreadyInState){
           dispatch(fetchPage(currentPage.resource))
@@ -61,7 +67,7 @@ function getComponent(nextState, cb) {
         } else if(nextState.location.pathname == '/checkout-success') {
           cb(null, CheckoutSuccessContainer);
         } else {
-          cb(null, CustomPageContainer)
+          cb(null, PageContainer)
         }
       } else {
         cb(null, NotFoundContainer)

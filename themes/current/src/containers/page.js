@@ -3,10 +3,9 @@ import text from '../lib/text'
 import config from '../lib/config'
 
 import MetaTags from '../components/metaTags'
-import CheckoutSuccess from '../components/checkoutSuccess'
 
-const CheckoutSuccessContainer = (props) => {
-  const {pageDetails, order, settings} = props.state;
+const PageContainer = (props) => {
+  const {pageDetails} = props.state;
 
   return (
     <div>
@@ -14,17 +13,23 @@ const CheckoutSuccessContainer = (props) => {
         title={pageDetails.meta_title}
         description={pageDetails.meta_description}
         canonicalUrl={pageDetails.url}
+        ogType="article"
         ogTitle={pageDetails.meta_title}
         ogDescription={pageDetails.meta_description}
       />
 
       <section className="section">
         <div className="container">
-          <CheckoutSuccess order={order} settings={settings} />
+          <div className="content">
+            <div dangerouslySetInnerHTML={{
+              __html: pageDetails.content
+            }}/>
+          </div>
         </div>
       </section>
+
     </div>
   )
 }
 
-export default CheckoutSuccessContainer
+export default PageContainer

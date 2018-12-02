@@ -1,37 +1,22 @@
 import React from 'react'
-import Helmet from 'react-helmet'
+import text from '../lib/text'
+import config from '../lib/config'
+
+import MetaTags from '../components/metaTags'
+import CategoryGallery from '../components/categoryGallery'
 
 const IndexContainer = (props) => {
-  const {pageDetails} = props.state;
+  const {pageDetails, categories} = props.state;
 
   return (
     <div>
-      <Helmet title={pageDetails.meta_title} meta={[
-        {
-          "name": "description",
-          "content": pageDetails.meta_description
-        }, {
-          "property": "og:type",
-          "content": "article"
-        }
-      ]} link={[{
-          "rel": "canonical",
-          "href": pageDetails.url
-        }
-      ]}/>
-
-      <section className="hero is-primary is-medium">
-        <div className="hero-body">
-          <div className="container">
-            <h1 className="title">
-              Medium title
-            </h1>
-            <h2 className="subtitle">
-              Medium subtitle
-            </h2>
-          </div>
-        </div>
-      </section>
+      <MetaTags
+        title={pageDetails.meta_title}
+        description={pageDetails.meta_description}
+        canonicalUrl={pageDetails.url}
+        ogTitle={pageDetails.meta_title}
+        ogDescription={pageDetails.meta_description}
+      />
 
       <section className="section">
         <div className="container">
@@ -42,7 +27,46 @@ const IndexContainer = (props) => {
           </div>
         </div>
       </section>
+
+      <section className="section">
+        <div className="container">
+          <CategoryGallery categories={categories} />
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <div className="notification">
+            <div className="columns">
+
+              <div className="column is-4 has-text-centered">
+                <img src="/assets/images/delivery-cart.svg" alt="" style={{ width: 64 }} />
+                <div className="title is-6">
+                  Free shipping on orders over USD $89
+                </div>
+              </div>
+
+              <div className="column is-4 has-text-centered">
+                <img src="/assets/images/credit-card.svg" alt="" style={{ width: 64 }} />
+                <div className="title is-6">
+                  We accept credit cards, PayPal, and bank wires
+                </div>
+              </div>
+
+              <div className="column is-4 has-text-centered">
+                <img src="/assets/images/open.svg" alt="" style={{ width: 64 }} />
+                <div className="title is-6">
+                  Open 24/7
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }
+
 export default IndexContainer

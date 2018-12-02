@@ -1,18 +1,23 @@
 import React from 'react'
 import {Link} from 'react-router'
-import MiniCart from './miniCart'
 import text from '../lib/text'
+import config from '../lib/config'
 
-const CartIndicator = ({cart}) => {
-  if (cart && cart.items && cart.items.length > 0) {
-    let itemsCount = 0;
-    for(let item of cart.items) {
-      itemsCount += item.quantity;
-    }
-    return <span className="tag is-danger">{itemsCount}</span>
-  } else {
-    return <span></span>
-  }
+import Cart from './cart'
+import CartIndicator from './cartIndicator'
+
+const HeadMenuItems = ({ categories, onClick, className}) => {
+  let items = categories.filter(category => category.parent_id === null).map((category, index) => (
+    <Link className="nav-item" activeClassName="is-active" key={index} to={category.path} onClick={onClick}>
+      {category.name}
+    </Link>
+  ));
+
+  return (
+    <div className={className}>
+      {items}
+    </div>
+  )
 }
 
 export default class Header extends React.Component {
@@ -39,11 +44,6 @@ export default class Header extends React.Component {
     const {categories, cart, settings} = this.props.state;
     const classMenu = this.state.mobileMenuIsActive ? 'nav-center nav-menu is-active' : 'nav-center nav-menu is-hidden-mobile';
     const classToggle = this.state.mobileMenuIsActive ? 'nav-toggle is-active' : 'nav-toggle';
-    const categoriesLinks = categories.filter(category => category.parent_id === null).map(category => (
-      <Link className="nav-item" activeClassName="is-active" key={category.id} to={category.path} onClick={this.menuClose}>
-        {category.name}
-      </Link>
-    ));
 
     return (
       <nav className="nav has-shadow" style={{ zIndex: 100 }}>
@@ -58,17 +58,22 @@ export default class Header extends React.Component {
               <img src="/assets/images/logo.png" alt="Store logo"/>
             </Link>
           </div>
-          <div className={classMenu}>
-            {categoriesLinks}
-          </div>
+
+          <HeadMenuItems categories={categories} onClick={this.menuClose} className={classMenu} />
+
           <div className="nav-right is-flex-mobile">
+            <Link className="nav-item" to="/search">
+              <span className="icon">
+                <img src="/assets/images/search.svg" alt={text.search} title={text.search}/>
+              </span>
+            </Link>
             <span className="nav-item" onClick={this.cartToggle} style={{ cursor: 'pointer' }}>
               <span className="icon">
                 <img src="/assets/images/shopping-bag.svg" alt={text.cart} title={text.cart}/>
               </span>
               <CartIndicator cart={cart} />
             </span>
-            <MiniCart cart={cart} deleteCartItem={this.props.deleteCartItem} active={this.state.cartIsActive} settings={settings} cartToggle={this.cartToggle} />
+            <Cart cart={cart} deleteCartItem={this.props.deleteCartItem} active={this.state.cartIsActive} settings={settings} cartToggle={this.cartToggle} />
           </div>
         </div>
       </nav>

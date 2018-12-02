@@ -1,8 +1,8 @@
 import React from 'react'
 import {Link} from 'react-router'
 import ImageGallery from 'react-image-gallery'
-import config from '../lib/config'
 import text from '../lib/text'
+import config from '../lib/config'
 import * as helper from '../lib/helper'
 
 const ProductOptions = ({ product }) => {
@@ -38,7 +38,7 @@ const ProductAttributes = ({ attributes }) => {
 const ProductPrice = ({ product, settings }) => {
   if(product.on_sale) {
     return (
-      <div className="subtitle is-5">
+      <div className="title is-5">
         <del className="product-old-price">{helper.formatCurrency(product.regular_price, settings)}</del>
         <span className="product-new-price">{helper.formatCurrency(product.price, settings)}</span>
       </div>
@@ -99,11 +99,11 @@ const ProductGallery = ({ images }) => {
     )
 
   } else {
-    return null;
+    return <div className="large-image-placeholder"></div>;
   }
 }
 
-const ProductDetail = ({product, addCartItem, settings}) => {
+const ProductDetails = ({product, addCartItem, settings}) => {
   return (
     <section className="section">
       <div className="container">
@@ -140,4 +140,4 @@ const ProductDetail = ({product, addCartItem, settings}) => {
   )
 }
 
-export default ProductDetail
+export default ProductDetails

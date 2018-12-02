@@ -1,11 +1,10 @@
 import React from 'react';
 import {Link} from 'react-router'
-import * as helper from '../lib/helper'
 import text from '../lib/text'
+import config from '../lib/config'
+import * as helper from '../lib/helper'
 
-export default(props) => {
-  const {order, settings} = props.state;
-
+const CheckoutSuccess = ({ order, settings }) => {
   if (order && order.items && order.items.length > 0) {
     let checkoutSuccessText = text.checkoutSuccessText.replace('{order_number}', `<b>${order.number}</b>`);
     return (
@@ -27,3 +26,5 @@ export default(props) => {
     )
   }
 }
+
+export default CheckoutSuccess

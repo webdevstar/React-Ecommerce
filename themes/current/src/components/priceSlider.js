@@ -1,9 +1,11 @@
 import React from 'react'
-import { Range } from 'rc-slider';
+import {Link} from 'react-router'
+import {Range} from 'rc-slider';
 import text from '../lib/text'
+import config from '../lib/config'
 import * as helper from '../lib/helper'
 
-export default class PriceRange extends React.Component {
+export default class PriceSlider extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
