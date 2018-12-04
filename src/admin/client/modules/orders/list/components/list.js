@@ -4,6 +4,7 @@ import Divider from 'material-ui/Divider';
 import Head from './head'
 import OrdersListItem from './item'
 import FlatButton from 'material-ui/FlatButton';
+import RaisedButton from 'material-ui/RaisedButton';
 import FontIcon from 'material-ui/FontIcon';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import messages from 'lib/text'
@@ -19,7 +20,7 @@ export default class OrdersList extends React.Component {
     }
 
     render(){
-      const { items, selected, isFetchingItems, isFetchingMore, onSelect, onSelectAll, loadMore, onCreate, settings } = this.props;
+      const { items, selected, loadingItems, hasMore, onSelect, onSelectAll, loadMore, onCreate, settings } = this.props;
       const rows = items.map((item, index) => (
         <OrdersListItem key={index} order={item} selected={selected} onSelect={onSelect} settings={settings} />
       ));
@@ -31,14 +32,14 @@ export default class OrdersList extends React.Component {
             <Divider />
             {rows}
             <div className={style.more}>
-              <FlatButton
-                disabled={isFetchingMore}
-                 label={messages.actions_loadMore}
-                 labelPosition="before"
-                 primary={false}
-                 icon={<FontIcon className="material-icons">refresh</FontIcon>}
-                 onTouchTap={loadMore}
-               />
+              <RaisedButton
+                disabled={loadingItems || !hasMore}
+                label={messages.actions_loadMore}
+                labelPosition="before"
+                primary={false}
+                icon={<FontIcon className="material-icons">refresh</FontIcon>}
+                onTouchTap={loadMore}
+              />
              </div>
           </List>
           {/* <FloatingActionButton secondary={false} style={{position: 'fixed', right: '25px', bottom: '15px', zIndex: 1}} onTouchTap={() => { onCreate() }}>

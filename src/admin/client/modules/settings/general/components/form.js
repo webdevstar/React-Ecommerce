@@ -247,9 +247,16 @@ class GeneralSettings extends React.Component {
               marginTop: 10,
               marginBottom: 10
             }}/>
+
+            <div className="row between-xs middle-xs">
+              <div className="col-xs-7">{messages.domain}</div>
+              <div className="col-xs-5">
+                <Field component={TextField} fullWidth={true} name="domain" placeholder="https://domain.com"/>
+              </div>
+            </div>
           </div>
           <div className="buttons-box">
-            <RaisedButton type="submit" label={messages.actions_save} primary={true} className={style.button} disabled={pristine || submitting}/>
+            <RaisedButton type="submit" label={messages.save} primary={true} className={style.button} disabled={pristine || submitting}/>
           </div>
           </Paper>
         </form>

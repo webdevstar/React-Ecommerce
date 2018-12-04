@@ -1,11 +1,18 @@
 import winston from 'winston';
 import express from 'express';
 let storeRouter = express.Router();
+import serverSettings from './settings'
+
+import jwt from 'jsonwebtoken';
+const TOKEN_PAYLOAD = {email: 'store', scopes: ['admin']};
+const STORE_ACCESS_TOKEN = jwt.sign(TOKEN_PAYLOAD, serverSettings.jwtSecretKey);
 
 import api from 'cezerin-client';
-api.initAjax(clientSettings.ajaxBaseUrl);
-api.init(serverSettings.apiBaseUrl, serverSettings.security.token);
+api.initAjax(serverSettings.ajaxBaseUrl);
+api.init(serverSettings.apiBaseUrl, STORE_ACCESS_TOKEN);
 
+import fs from 'fs'
+import path from 'path'
 import React from 'react'
 import {match, RouterContext} from 'react-router'
 import {renderToString} from 'react-dom/server'
@@ -16,9 +23,8 @@ import Helmet from 'react-helmet'
 import createRoutes from '../shared/routes'
 import reducers from '../shared/reducers'
 import {getInitialState} from '../shared/actions'
-import clientSettings from '../client/settings'
-import serverSettings from './settings'
 import { readIndexHtmlFile } from './theme.js'
+import sm from 'sitemap'
 
 const getHead = () => {
   const helmet = Helmet.rewind();
@@ -34,8 +40,18 @@ const getHead = () => {
   }
 }
 
+const getReferrerCookieOptions = (isHttps) => ({
+  maxAge: 604800000,
+  httpOnly: true,
+  signed: true,
+  secure: isHttps,
+  sameSite: 'strict'
+})
+
 const renderHtml = (req, res, renderProps, store, templateHtml, httpStatusCode) => {
   const full_url = `${req.protocol}://${req.hostname}${req.url}`;
+  const isHttps = req.protocol === 'https';
+  const REFERRER_COOKIE_OPTIONS = getReferrerCookieOptions(isHttps);
   const referrer_url = req.get('referrer') === undefined ? '' : req.get('referrer');
 
   const {location, params, history} = renderProps;
@@ -48,16 +64,16 @@ const renderHtml = (req, res, renderProps, store, templateHtml, httpStatusCode) 
   const state = store.getState();
   const head = getHead();
   const html = templateHtml
-  .replace('{language}', clientSettings.language)
+  .replace('{language}', serverSettings.language)
   .replace('{title}', head.title).replace('{meta}', head.meta).replace('{link}', head.link)
   .replace('{script}', head.script).replace('{state}', JSON.stringify(state)).replace('{content}', contentHtml);
 
   if(!req.signedCookies.referrer_url) {
-    res.cookie('referrer_url', referrer_url, serverSettings.referrerCookieOptions);
+    res.cookie('referrer_url', referrer_url, REFERRER_COOKIE_OPTIONS);
   }
 
   if(!req.signedCookies.landing_url) {
-    res.cookie('landing_url', full_url, serverSettings.referrerCookieOptions);
+    res.cookie('landing_url', full_url, REFERRER_COOKIE_OPTIONS);
   }
 
   res.status(httpStatusCode).send(html);
@@ -67,6 +83,40 @@ const sendPageError = (res, status, err) => {
   winston.error('Page error', err);
   res.status(status).send(err);
 }
+
+storeRouter.get('/robots.txt', (req, res) => {
+  api.settings.retrieve().then(settingsResponse => {
+    fs.readFile(path.resolve('public/robots.template'), 'utf8', (err, data) => {
+      if(err) {
+        return res.status(500).end();
+      } else {
+        const robots = data.replace(/{domain}/g, settingsResponse.json.domain)
+        res.header('Content-Type', 'text/plain');
+        res.send(robots);
+      }
+    });
+  })
+})
+
+storeRouter.get('/sitemap.xml', (req, res) => {
+  Promise.all([
+    api.sitemap.list(),
+    api.settings.retrieve()
+  ]).then(([sitemapResponse, settingsResponse]) => {
+    const urls = sitemapResponse.json.filter(item => item.type !== 'reserved' && item.type !== 'search').map(item => item.path)
+    const sitemap = sm.createSitemap ({
+      hostname: settingsResponse.json.domain,
+      urls: urls
+    });
+    sitemap.toXML((err, xml) => {
+      if (err) {
+        return res.status(500).end();
+      }
+      res.header('Content-Type', 'application/xml');
+      res.send(xml);
+    });
+  })
+});
 
 storeRouter.get('*', (req, res, next) => {
   Promise.all([

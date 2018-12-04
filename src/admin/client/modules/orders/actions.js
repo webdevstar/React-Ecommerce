@@ -1,34 +1,21 @@
 import * as t from './actionTypes'
 import api from 'lib/api'
 import messages from 'lib/text'
-// import { push } from 'react-router-redux';
-// import moment from 'moment';
+import { push } from 'react-router-redux';
+import moment from 'moment';
 
-// function requestOrder() {
-//   return {
-//     type: t.ORDER_EDIT_REQUEST
-//   }
-// }
-//
-// function receiveOrder(item) {
-//   return {
-//     type: t.ORDER_EDIT_RECEIVE,
-//     item
-//   }
-// }
-//
-// function receiveOrderError(error) {
-//   return {
-//     type: t.ORDER_EDIT_FAILURE,
-//     error
-//   }
-// }
+function requestOrder() {
+  return {
+    type: t.ORDER_DETAIL_REQUEST
+  }
+}
 
-// export function cancelOrderEdit() {
-//   return {
-//     type: t.ORDER_EDIT_ERASE
-//   }
-// }
+function receiveOrder(item) {
+  return {
+    type: t.ORDER_DETAIL_RECEIVE,
+    item
+  }
+}
 
 function requestOrders() {
   return {
@@ -42,17 +29,21 @@ function requestMoreOrders() {
   }
 }
 
-function receiveOrdersMore(items) {
+function receiveOrdersMore({ has_more, total_count, data }) {
   return {
     type: t.ORDERS_MORE_RECEIVE,
-    items
+    has_more,
+    total_count,
+    data
   }
 }
 
-function receiveOrders(items) {
+function receiveOrders({ has_more, total_count, data }) {
   return {
     type: t.ORDERS_RECEIVE,
-    items
+    has_more,
+    total_count,
+    data
   }
 }
 
@@ -151,16 +142,52 @@ function deleteOrdersSuccess() {
 //   }
 // }
 
+const getFilter = (state, offset = 0) => {
+  const filterState = state.orders.filter;
+  let filter = {
+    limit: 50,
+    offset: offset
+  }
+
+  if(filterState.search !== null && filterState.search !== ''){
+    filter.search = filterState.search;
+  }
+
+  if(filterState.closed !== null){
+    filter.closed = filterState.closed;
+  }
+
+  if(filterState.cancelled !== null){
+    filter.cancelled = filterState.cancelled;
+  }
+
+  if(filterState.delivered !== null){
+    filter.delivered = filterState.delivered;
+  }
+
+  if(filterState.paid !== null){
+    filter.paid = filterState.paid;
+  }
+
+  if(filterState.hold !== null){
+    filter.hold = filterState.hold;
+  }
+
+  if(filterState.draft !== null){
+    filter.draft = filterState.draft;
+  }
+
+  return filter;
+}
+
 export function fetchOrders() {
   return (dispatch, getState) => {
     const state = getState();
-    if (!state.orders.isFetchingItems) {
+    if (!state.orders.loadingItems) {
       dispatch(requestOrders());
       dispatch(deselectAllOrder());
 
-      let filter = state.orders.filter;
-      filter.limit = 20;
-      console.log(filter);
+      let filter = getFilter(state);
 
       return api.orders.list(filter)
         .then(({status, json}) => {
@@ -176,20 +203,19 @@ export function fetchOrders() {
 export function fetchMoreOrders() {
   return (dispatch, getState) => {
     const state = getState();
-    dispatch(requestMoreOrders());
+    if (!state.orders.loadingItems) {
+      dispatch(requestMoreOrders());
 
-    let filter = state.orders.filter;
-    filter.limit = 50;
-    filter.offset = state.orders.items.length;
-    console.log(filter);
+      let filter = getFilter(state, state.orders.items.length);
 
-    return api.orders.list(filter)
-      .then(({status, json}) => {
-        dispatch(receiveOrdersMore(json))
-      })
-      .catch(error => {
-          dispatch(receiveOrdersError(error));
-      });
+      return api.orders.list(filter)
+        .then(({status, json}) => {
+          dispatch(receiveOrdersMore(json))
+        })
+        .catch(error => {
+            dispatch(receiveOrdersError(error));
+        });
+    }
   }
 }
 
@@ -216,6 +242,53 @@ export function deleteOrders() {
       dispatch(deselectAllOrder());
       dispatch(fetchOrders());
     }).catch(err => { console.log(err) });
+  }
+}
+
+export function fetchOrder(orderId) {
+  return (dispatch, getState) => {
+    dispatch(requestOrder());
+
+    return api.orders.retrieve(orderId).then(orderResponse => {
+      let order = orderResponse.json;
+      const productIds = order && order.items && order.items.length > 0 ? order.items.map(item => item.product_id) : [];
+      api.products.list({ ids: productIds, fields: 'images,enabled,stock_quantity,variants' }).then(productsResponse => {
+        const products = productsResponse.json.data;
+
+        const newItems = order.items.map(item => {
+          const product = products.find(p => p.id === item.product_id);
+          item.image_url = product && product.images.length > 0 ? product.images[0].url : null;
+          return item;
+        })
+
+        dispatch(receiveOrder(order))
+      });
+    })
+    .catch(error => {});
+  }
+}
+
+export function deleteOrderItem(orderId, orderItemId){
+  return (dispatch, getState) => {
+    const state = getState();
+
+    api.orders.items.delete(orderId, orderItemId)
+    .then(() => {
+      dispatch(fetchOrder(orderId));
+    })
+    .catch(error => {});
+  }
+}
+
+export function updateOrderItem(orderId, orderItemId, quantity){
+  return (dispatch, getState) => {
+    const state = getState();
+
+    api.orders.items.update(orderId, orderItemId, { quantity: quantity })
+    .then(() => {
+      dispatch(fetchOrder(orderId));
+    })
+    .catch(error => {});
   }
 }
 

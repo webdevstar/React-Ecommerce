@@ -3,8 +3,8 @@ const app = express();
 const helmet = require('helmet')
 const bodyParser = require('body-parser');
 const apiRouter = require('./api/server');
-const storeRouter = require('./store/server');
 const ajaxRouter = require('./store/server/ajax');
+const storeRouter = require('./store/server');
 const responseTime = require('response-time');
 const settings = require('../config/server');
 const path = require('path');
@@ -55,11 +55,12 @@ app.use('/api', apiRouter);
 app.get('/admin/*', (req, res) => {
   res.sendFile(ADMIN_INDEX_PATH)
 });
-app.use(cookieParser(settings.security.cookieKey));
+app.use(cookieParser(settings.cookieSecretKey));
 app.use('/ajax', ajaxRouter);
 app.use('/', storeRouter);
 app.use(logErrors);
 
-const server = app.listen(settings.nodeServerPort, settings.nodeServerHost, () => {
-  winston.info(`Server start at http://${settings.nodeServerHost}:${settings.nodeServerPort}`)
+const server = app.listen(settings.listenPort, () => {
+  const serverAddress = server.address();
+  winston.info(`Server start at http://${serverAddress.address}:${serverAddress.port}`)
 });
