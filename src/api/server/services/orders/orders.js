@@ -98,12 +98,12 @@ class OrdersService {
     }
 
     if (date_created_min || date_created_max) {
-      filter.date_created = {};
+      filter.date_placed = {};
       if (date_created_min) {
-        filter.date_created['$gte'] = date_created_min.toISOString();
+        filter.date_placed['$gte'] = date_created_min.toISOString();
       }
       if (date_created_max) {
-        filter.date_created['$lte'] = date_created_max.toISOString();
+        filter.date_placed['$lte'] = date_created_max.toISOString();
       }
     }
 
@@ -132,26 +132,32 @@ class OrdersService {
   }
 
   getOrders(params) {
-    return Promise.all([OrderStatusesService.getStatuses(), ShippingMethodsLightService.getMethods(), PaymentMethodsLightService.getMethods()]).then(([orderStatuses, shippingMethods, paymentMethods]) => {
-      let filter = this.getFilter(params);
-      const limit = parse.getNumberIfPositive(params.limit) || 1000000;
-      const offset = parse.getNumberIfPositive(params.offset) || 0;
+    let filter = this.getFilter(params);
+    const limit = parse.getNumberIfPositive(params.limit) || 1000000;
+    const offset = parse.getNumberIfPositive(params.offset) || 0;
 
-      return mongo.db.collection('orders').find(filter).sort({date_created: -1}).skip(offset).limit(limit).toArray().then(orders => orders.map(order => {
-        return this.changeProperties(order, orderStatuses, shippingMethods, paymentMethods);
-      }));
-    });
+    return Promise.all([
+      mongo.db.collection('orders').find(filter).sort({date_placed: -1, date_created: -1}).skip(offset).limit(limit).toArray(),
+      mongo.db.collection('orders').find(filter).count(),
+      OrderStatusesService.getStatuses(),
+      ShippingMethodsLightService.getMethods(),
+      PaymentMethodsLightService.getMethods()
+    ]).then(([orders, ordersCount, orderStatuses, shippingMethods, paymentMethods]) => {
+      const items = orders.map(order => this.changeProperties(order, orderStatuses, shippingMethods, paymentMethods));
+      const result = {
+        total_count: ordersCount,
+        has_more: (offset + items.length) < ordersCount,
+        data: items
+      };
+      return result;
+    })
   }
 
   getSingleOrder(id) {
     if (!ObjectID.isValid(id)) {
       return Promise.reject('Invalid identifier');
     }
-    return this.getOrders({id: id}).then(orders => {
-      return orders.length > 0
-        ? orders[0]
-        : null;
-    })
+    return this.getOrders({id: id}).then(items => items.data.length > 0 ? items.data[0] : {})
   }
 
   associateOrderWithCustomer(order) {
@@ -267,6 +273,7 @@ class OrdersService {
 
       let order = {
         'date_created': new Date(),
+        'date_placed': null,
         'date_updated': null,
         'date_completed': null,
         'date_paid': null,
@@ -528,7 +535,10 @@ class OrdersService {
     - fire Webhooks
     */
     return Promise.all([
-        this.getSingleOrder(order_id),
+        this.updateOrder(order_id, {
+          date_placed: new Date(),
+          draft: false
+        }),
         EmailTemplatesService.getEmailTemplate('order_confirmation')
       ]).then(([ order, emailTemplate ]) => {
         const handlebarsTemplate = handlebars.compile(emailTemplate.body);
