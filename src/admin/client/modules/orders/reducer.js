@@ -6,8 +6,8 @@ const initialState = {
   selected: [],
   hasMore: false,
   totalCount: 0,
-  isUpdating: false,
   loadingItems: false,
+  processingCheckout: false,
   errorLoadingItems: null,
 
   filter: {
@@ -18,7 +18,6 @@ const initialState = {
     paid: null,
     hold: null,
     draft: false
-
     // status_id: null,
     // customer_id: null,
     // payment_method_id: null,
@@ -27,32 +26,13 @@ const initialState = {
     // grand_total_max: null,
     // date_created_min: null,
     // date_created_max: null,
-    // date_completed_min: null,
-    // date_completed_max: null
+    // date_closed_min: null,
+    // date_closed_max: null
   }
 };
 
 export default (state = initialState, action) => {
   switch (action.type) {
-    // case t.ORDER_EDIT_REQUEST:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: true
-    //   })
-    // case t.ORDER_EDIT_RECEIVE:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: false,
-    //     editItem: action.item
-    //   })
-    // case t.ORDER_EDIT_ERASE:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: false,
-    //     editItem: null
-    //   })
-    // case t.ORDER_EDIT_FAILURE:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: true,
-    //     errorFetchEdit: action.error
-    //   })
     case t.ORDERS_REQUEST:
       return Object.assign({}, state, {
         loadingItems: true
@@ -109,14 +89,27 @@ export default (state = initialState, action) => {
       return Object.assign({}, state, {
         editOrder: action.item
       })
-    // case t.ORDER_UPDATE_REQUEST:
-    // case t.ORDER_UPDATE_SUCCESS:
-    // case t.ORDER_UPDATE_FAILURE:
+    case t.ORDER_CHECKOUT_REQUEST:
+      return Object.assign({}, state, {
+        processingCheckout: true
+      })
+    case t.ORDER_CHECKOUT_RECEIVE:
+      return Object.assign({}, state, {
+        processingCheckout: false
+      })
+    case t.ORDER_CHECKOUT_FAILURE:
+      return Object.assign({}, state, {
+        processingCheckout: false
+      })
+    case t.ORDER_UPDATE_REQUEST:
+    case t.ORDER_UPDATE_SUCCESS:
+    case t.ORDER_UPDATE_FAILURE:
     case t.ORDERS_BULK_UPDATE_REQUEST:
     case t.ORDERS_BULK_UPDATE_SUCCESS:
     case t.ORDERS_BULK_UPDATE_FAILURE:
     case t.ORDER_SET_CATEGORY_SUCCESS:
     case t.ORDER_DELETE_SUCCESS:
+    case t.ORDER_CREATE_SUCCESS:
     default:
       return state
   }

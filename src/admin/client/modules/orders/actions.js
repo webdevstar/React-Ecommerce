@@ -17,6 +17,10 @@ function receiveOrder(item) {
   }
 }
 
+export function clearOrderDetails() {
+  return receiveOrder(null);
+}
+
 function requestOrders() {
   return {
     type: t.ORDERS_REQUEST
@@ -50,6 +54,25 @@ function receiveOrders({ has_more, total_count, data }) {
 function receiveOrdersError(error) {
   return {
     type: t.ORDERS_FAILURE,
+    error
+  }
+}
+
+function requestOrderCheckout() {
+  return {
+    type: t.ORDER_CHECKOUT_REQUEST
+  }
+}
+
+function receiveOrderCheckout() {
+  return {
+    type: t.ORDER_CHECKOUT_RECEIVE
+  }
+}
+
+function failOrderCheckout(error) {
+  return {
+    type: t.ORDER_CHECKOUT_FAILURE,
     error
   }
 }
@@ -111,36 +134,30 @@ function deleteOrdersSuccess() {
   }
 }
 
-// function setGroupSuccess() {
-//   return {
-//     type: t.ORDER_SET_GROUP_SUCCESS
-//   }
-// }
-//
-// function requestUpdateOrder(id) {
-//   return {
-//     type: t.ORDER_UPDATE_REQUEST
-//   }
-// }
-//
-// function receiveUpdateOrder() {
-//   return {
-//     type: t.ORDER_UPDATE_SUCCESS
-//   }
-// }
-//
-// function errorUpdateOrder(error) {
-//   return {
-//     type: t.ORDER_UPDATE_FAILURE,
-//     error
-//   }
-// }
-//
-// function successCreateOrder(id) {
-//   return {
-//     type: t.ORDER_CREATE_SUCCESS
-//   }
-// }
+function createOrdersSuccess() {
+  return {
+    type: t.ORDER_CREATE_SUCCESS
+  }
+}
+
+function requestOrderUpdate() {
+  return {
+    type: t.ORDER_UPDATE_REQUEST
+  }
+}
+
+function receiveOrderUpdate() {
+  return {
+    type: t.ORDER_UPDATE_SUCCESS
+  }
+}
+
+function failOrderUpdate(error) {
+  return {
+    type: t.ORDER_UPDATE_FAILURE,
+    error
+  }
+}
 
 const getFilter = (state, offset = 0) => {
   const filterState = state.orders.filter;
@@ -245,24 +262,56 @@ export function deleteOrders() {
   }
 }
 
+export function deleteCurrentOrder() {
+  return (dispatch, getState) => {
+    const state = getState();
+    let order = state.orders.editOrder;
+
+    if(order && order.id) {
+      return api.orders.delete(order.id).then(response => {
+        dispatch(push('/admin/orders'));
+      }).catch(err => { console.log(err) });
+    }
+  }
+}
+
+const fetchOrderAdditionalData = (order) => {
+  order.customer = null;
+  const productIds = order && order.items && order.items.length > 0 ? order.items.map(item => item.product_id) : [];
+  const productFilter = { ids: productIds, fields: 'images,enabled,stock_quantity,variants,options' };
+
+  return api.products.list(productFilter)
+  .then(productsResponse => {
+    const products = productsResponse.json.data;
+    const newItems = order.items.map(item => {
+      item.product = products.find(p => p.id === item.product_id);
+      return item;
+    })
+    order.items = newItems;
+    return order;
+  })
+  .then(order => {
+    if(order.customer_id && order.customer_id.length > 0){
+      return api.customers.retrieve(order.customer_id).then(customerResponse => {
+        order.customer = customerResponse.json;
+        return order;
+      })
+    } else {
+      return order;
+    }
+  })
+  .catch(error => error);
+}
+
 export function fetchOrder(orderId) {
   return (dispatch, getState) => {
     dispatch(requestOrder());
 
-    return api.orders.retrieve(orderId).then(orderResponse => {
-      let order = orderResponse.json;
-      const productIds = order && order.items && order.items.length > 0 ? order.items.map(item => item.product_id) : [];
-      api.products.list({ ids: productIds, fields: 'images,enabled,stock_quantity,variants' }).then(productsResponse => {
-        const products = productsResponse.json.data;
-
-        const newItems = order.items.map(item => {
-          const product = products.find(p => p.id === item.product_id);
-          item.image_url = product && product.images.length > 0 ? product.images[0].url : null;
-          return item;
-        })
-
-        dispatch(receiveOrder(order))
-      });
+    return api.orders.retrieve(orderId)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
     })
     .catch(error => {});
   }
@@ -273,91 +322,124 @@ export function deleteOrderItem(orderId, orderItemId){
     const state = getState();
 
     api.orders.items.delete(orderId, orderItemId)
-    .then(() => {
-      dispatch(fetchOrder(orderId));
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
     })
     .catch(error => {});
   }
 }
 
-export function updateOrderItem(orderId, orderItemId, quantity){
+export function addOrderItem(orderId, productId){
   return (dispatch, getState) => {
     const state = getState();
 
-    api.orders.items.update(orderId, orderItemId, { quantity: quantity })
-    .then(() => {
-      dispatch(fetchOrder(orderId));
+    api.orders.items.create(orderId, {
+      product_id: productId,
+      variant_id: null,
+      quantity: 1
+    })
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
     })
     .catch(error => {});
   }
 }
 
-// export function setGroup(group_id) {
-//   return (dispatch, getState) => {
-//     const state = getState();
-//     let promises = state.orders.selected.map(orderId => api.orders.update(orderId, { group_id: group_id }));
-//
-//     return Promise.all(promises).then(values => {
-//       dispatch(setGroupSuccess());
-//       dispatch(deselectAllOrder());
-//       dispatch(fetchOrders());
-//     }).catch(err => { console.log(err) });
-//   }
-// }
+export function updateOrderItem(orderId, orderItemId, quantity, variantId){
+  return (dispatch, getState) => {
+    const state = getState();
 
-// export function updateOrder(data) {
-//   return (dispatch, getState) => {
-//     dispatch(requestUpdateOrder(data.id));
-//
-//     delete data.images;
-//     if(!data.slug || data.slug === '') {
-//       data.slug = data.name;
-//     }
-//
-//     return api.orders.update(data.id, data).then(({status, json}) => {
-//         dispatch(receiveUpdateOrder());
-//         dispatch(fetchOrders());
-//     })
-//     .catch(error => {
-//         dispatch(errorUpdateOrder(error));
-//     });
-//   }
-// }
+    api.orders.items.update(orderId, orderItemId, { quantity: quantity, variant_id: variantId })
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {});
+  }
+}
 
-// export function createOrder() {
-//   return (dispatch, getState) => {
-//     const state = getState();
-//     return api.orders.create({ active: false, group_id: state.orderGroups.selectedId }).then(({status, json}) => {
-//         dispatch(successCreateOrder(json.id));
-//         dispatch(fetchOrders());
-//         dispatch(push('/admin/product/'+json.id));
-//     })
-//     .catch(error => {
-//         //dispatch error
-//         console.log(error)
-//     });
-//   }
-// }
+export function updateOrder(data) {
+  return (dispatch, getState) => {
+    dispatch(requestOrderUpdate());
 
+    return api.orders.update(data.id, data)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrderUpdate());
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {
+      dispatch(failOrderUpdate(error));
+    });
+  }
+}
 
-// export function fetchOrder(id) {
-//   return (dispatch, getState) => {
-//     dispatch(requestOrder());
-//
-//     return api.orders.retrieve(id).then(({status, json}) => {
-//       const saleFrom = moment(json.date_sale_from);
-//       const saleTo = moment(json.date_sale_to);
-//       const stockExpected = moment(json.date_stock_expected);
-//
-//       json.date_sale_from = saleFrom.isValid() ? saleFrom.toDate() : null;
-//       json.date_sale_to = saleTo.isValid() ? saleTo.toDate() : null;
-//       json.date_stock_expected = stockExpected.isValid() ? stockExpected.toDate() : null;
-//       json.weight = '';
-//
-//       dispatch(receiveOrder(json))
-//     })
-//     .catch(error => {
-//       dispatch(receiveOrderError(error));
-//     });
-//   }
-// }
+export function closeOrder(orderId) {
+  return (dispatch, getState) => {
+    return api.orders.close(orderId)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {});
+  }
+}
+
+export function cancelOrder(orderId) {
+  return (dispatch, getState) => {
+    return api.orders.cancel(orderId)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {});
+  }
+}
+
+export function updateShippingAddress(orderId, address) {
+  return (dispatch, getState) => {
+    return api.orders.updateShippingAddress(orderId, address)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {});
+  }
+}
+
+export function createOrder() {
+  return (dispatch, getState) => {
+    const state = getState();
+    return api.orders.create({ draft: true, referrer_url: 'admin' }).then(orderResponse => {
+      const orderId = orderResponse.json.id;
+      dispatch(createOrdersSuccess());
+      dispatch(push(`/admin/order/${orderId}`));
+    })
+    .catch(error => {});
+  }
+}
+
+export function checkoutOrder(orderId) {
+  return (dispatch, getState) => {
+    dispatch(requestOrderCheckout());
+    return api.orders.checkout(orderId)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrderCheckout());
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {
+      dispatch(failOrderCheckout(error));
+    });
+  }
+}
