@@ -233,6 +233,12 @@
   "orders_paid": "Paid",
   "orders_hold": "Hold",
   "orders_draft": "Draft",
+  "orders_setClosed": "Set as Closed",
+  "orders_setCancelled": "Set as Cancelled",
+  "orders_setDelivered": "Set as Delivered",
+  "orders_setPaid": "Set as Paid",
+  "orders_setHold": "Set as Hold",
+  "orders_setDraft": "Set as Draft",
   "orders_search": "Search orders",
   "pageNotFound": "Page not found!",
   "skuTaken": "Product SKU must be unique",
@@ -271,13 +277,5 @@
   "coupon": "Coupon",
   "editOrderItem": "Edit order item",
   "addOrderItem": "Add product",
-  "quantity": "Quantity",
-  "deleteOrder": "Delete order",
-  "closeOrder": "Close order",
-  "cancelOrder": "Cancel order",
-  "holdOrder": "Hold order",
-  "resumeOrder": "Resume order",
-  "deleteOrderConfirmation": "Delete order forever? You can’t undo this action.",
-  "closeOrderConfirmation": "Close order? You can’t undo this action.",
-  "cancelOrderConfirmation": "Cancel order? You can’t undo this action."
+  "quantity": "Quantity"
 }

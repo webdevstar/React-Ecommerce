@@ -18,6 +18,7 @@ const initialState = {
     paid: null,
     hold: null,
     draft: false
+
     // status_id: null,
     // customer_id: null,
     // payment_method_id: null,
@@ -33,6 +34,25 @@ const initialState = {
 
 export default (state = initialState, action) => {
   switch (action.type) {
+    // case t.ORDER_EDIT_REQUEST:
+    //   return Object.assign({}, state, {
+    //     isFetchingEdit: true
+    //   })
+    // case t.ORDER_EDIT_RECEIVE:
+    //   return Object.assign({}, state, {
+    //     isFetchingEdit: false,
+    //     editItem: action.item
+    //   })
+    // case t.ORDER_EDIT_ERASE:
+    //   return Object.assign({}, state, {
+    //     isFetchingEdit: false,
+    //     editItem: null
+    //   })
+    // case t.ORDER_EDIT_FAILURE:
+    //   return Object.assign({}, state, {
+    //     isFetchingEdit: true,
+    //     errorFetchEdit: action.error
+    //   })
     case t.ORDERS_REQUEST:
       return Object.assign({}, state, {
         loadingItems: true
@@ -89,9 +109,9 @@ export default (state = initialState, action) => {
       return Object.assign({}, state, {
         editOrder: action.item
       })
-    case t.ORDER_UPDATE_REQUEST:
-    case t.ORDER_UPDATE_SUCCESS:
-    case t.ORDER_UPDATE_FAILURE:
+    // case t.ORDER_UPDATE_REQUEST:
+    // case t.ORDER_UPDATE_SUCCESS:
+    // case t.ORDER_UPDATE_FAILURE:
     case t.ORDERS_BULK_UPDATE_REQUEST:
     case t.ORDERS_BULK_UPDATE_SUCCESS:
     case t.ORDERS_BULK_UPDATE_FAILURE:

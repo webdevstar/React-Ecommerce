@@ -163,12 +163,11 @@ export class OrderItem extends React.Component {
     const discountTotal = helper.formatCurrency(item.discount_total, settings);
     const imageUrl = product && product.images.length > 0 ? product.images[0].url : null;
     const thumbnailUrl = helper.getThumbnailUrl(imageUrl, 100);
-    const productOptions = product ? product.options : [];
 
-    let maxItems = product ? product.stock_quantity : 0;
+    let maxItems = product.stock_quantity;
     if(selectedVariant){
       maxItems = selectedVariant.stock_quantity;
-    } else if(product && product.options && product.options.length > 0){
+    } else if(product.options && product.options.length > 0){
       // product variant not exists with this options
       maxItems = 0;
     }
@@ -178,7 +177,7 @@ export class OrderItem extends React.Component {
       quantityItems.push(<MenuItem key={0} value={0} primaryText={messages.products_outOfStock} />);
       quantity = 0;
     } else {
-      for(let i = 1; i <= maxItems, i <= 100;  i++){
+      for(let i = 1; i <= maxItems; i++){
         quantityItems.push(<MenuItem key={i} value={i} primaryText={i.toString()} />);
       }
     }
@@ -221,7 +220,7 @@ export class OrderItem extends React.Component {
           contentStyle={{ width: 400 }}
         >
           <div>
-            <ProductOptions options={productOptions} onChange={this.onOptionChange} selectedOptions={selectedOptions} />
+            <ProductOptions options={product.options} onChange={this.onOptionChange} selectedOptions={selectedOptions} />
             <SelectField
               floatingLabelText={messages.quantity}
               fullWidth={true}

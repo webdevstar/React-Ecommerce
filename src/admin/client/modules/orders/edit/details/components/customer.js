@@ -35,16 +35,14 @@ const OrderCustomer = ({order}) => {
         <div className="blue-title" style={{ paddingBottom:16, paddingTop:0 }}>{messages.customer}</div>
 
         <div className={style.address}>
-          <div><Link to={`/admin/customer/${order.customer_id}`} className={style.link}>{order.customer && order.customer.full_name}</Link></div>
+          <div>-</div>
           <div><a href={"MailTo:" + order.email} className={style.link}>{order.email}</a></div>
           <div>{order.mobile}</div>
         </div>
 
         <Divider style={{
           marginTop: 30,
-          marginBottom: 30,
-          marginLeft: -30,
-          marginRight: -30
+          marginBottom: 30
         }}/>
 
         <div style={{ paddingBottom:16, paddingTop:0 }}>{messages.shippingAddress}</div>
@@ -55,9 +53,7 @@ const OrderCustomer = ({order}) => {
 
         <Divider style={{
           marginTop: 30,
-          marginBottom: 30,
-          marginLeft: -30,
-          marginRight: -30
+          marginBottom: 30
         }}/>
 
         <div style={{ paddingBottom:16, paddingTop:0 }}>{messages.billingAddress}</div>

@@ -29,12 +29,12 @@
 }
 
 .item {
-  padding: 10px 5px;
+  padding: 20px 10px;
 }
 
 .itemImage {
   max-width: 100%;
-  max-height: 80px;
+  max-height: 100px;
 }
 
 .itemDiscount {
@@ -44,7 +44,6 @@
 
 .itemName {
   color: rgba(0, 0, 0, 0.54);
-  font-size: 14px;
 }
 
 .itemName a {
