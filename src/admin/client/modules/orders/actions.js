@@ -58,6 +58,25 @@ function receiveOrdersError(error) {
   }
 }
 
+function requestOrderCheckout() {
+  return {
+    type: t.ORDER_CHECKOUT_REQUEST
+  }
+}
+
+function receiveOrderCheckout() {
+  return {
+    type: t.ORDER_CHECKOUT_RECEIVE
+  }
+}
+
+function failOrderCheckout(error) {
+  return {
+    type: t.ORDER_CHECKOUT_FAILURE,
+    error
+  }
+}
+
 export function selectOrder(id) {
   return {
     type: t.ORDERS_SELECT,
@@ -361,6 +380,30 @@ export function updateOrder(data) {
   }
 }
 
+export function closeOrder(orderId) {
+  return (dispatch, getState) => {
+    return api.orders.close(orderId)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {});
+  }
+}
+
+export function cancelOrder(orderId) {
+  return (dispatch, getState) => {
+    return api.orders.cancel(orderId)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {});
+  }
+}
+
 export function updateShippingAddress(orderId, address) {
   return (dispatch, getState) => {
     return api.orders.updateShippingAddress(orderId, address)
@@ -376,11 +419,27 @@ export function updateShippingAddress(orderId, address) {
 export function createOrder() {
   return (dispatch, getState) => {
     const state = getState();
-    return api.orders.create({  }).then(orderResponse => {
+    return api.orders.create({ draft: true, referrer_url: 'admin' }).then(orderResponse => {
       const orderId = orderResponse.json.id;
       dispatch(createOrdersSuccess());
       dispatch(push(`/admin/order/${orderId}`));
     })
     .catch(error => {});
+  }
+}
+
+export function checkoutOrder(orderId) {
+  return (dispatch, getState) => {
+    dispatch(requestOrderCheckout());
+    return api.orders.checkout(orderId)
+    .then(orderResponse => orderResponse.json)
+    .then(fetchOrderAdditionalData)
+    .then(order => {
+      dispatch(receiveOrderCheckout());
+      dispatch(receiveOrder(order))
+    })
+    .catch(error => {
+      dispatch(failOrderCheckout(error));
+    });
   }
 }
