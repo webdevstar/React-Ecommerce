@@ -139,18 +139,16 @@ export class OrderItem extends React.Component {
   }
 
   render() {
-    const {item, settings} = this.props;
+    const {item, settings, allowEdit} = this.props;
 
     const editFormActions = [
       <FlatButton
         label={messages.cancel}
-        primary={true}
         onTouchTap={this.hideEditForm}
       />,
       <FlatButton
         label={messages.save}
         primary={true}
-        keyboardFocused={true}
         onTouchTap={this.submitEditForm}
       />,
     ];
@@ -163,11 +161,12 @@ export class OrderItem extends React.Component {
     const discountTotal = helper.formatCurrency(item.discount_total, settings);
     const imageUrl = product && product.images.length > 0 ? product.images[0].url : null;
     const thumbnailUrl = helper.getThumbnailUrl(imageUrl, 100);
+    const productOptions = product ? product.options : [];
 
-    let maxItems = product.stock_quantity;
+    let maxItems = product ? product.stock_quantity : 0;
     if(selectedVariant){
       maxItems = selectedVariant.stock_quantity;
-    } else if(product.options && product.options.length > 0){
+    } else if(product && product.options && product.options.length > 0){
       // product variant not exists with this options
       maxItems = 0;
     }
@@ -177,7 +176,7 @@ export class OrderItem extends React.Component {
       quantityItems.push(<MenuItem key={0} value={0} primaryText={messages.products_outOfStock} />);
       quantity = 0;
     } else {
-      for(let i = 1; i <= maxItems; i++){
+      for(let i = 1; i <= maxItems, i <= 100;  i++){
         quantityItems.push(<MenuItem key={i} value={i} primaryText={i.toString()} />);
       }
     }
@@ -204,10 +203,12 @@ export class OrderItem extends React.Component {
             }
           </div>
           <div className="col-xs-1" style={{ textAlign: 'center' }}>
-            <IconMenu iconButtonElement={iconButtonElement}>
-              <MenuItem onTouchTap={this.showEditForm}>{messages.edit}</MenuItem>
-              <MenuItem onTouchTap={this.deleteItem}>{messages.actions_delete}</MenuItem>
-            </IconMenu>
+            {allowEdit &&
+              <IconMenu iconButtonElement={iconButtonElement}>
+                <MenuItem onTouchTap={this.showEditForm}>{messages.edit}</MenuItem>
+                <MenuItem onTouchTap={this.deleteItem}>{messages.actions_delete}</MenuItem>
+              </IconMenu>
+            }
           </div>
         </div>
         <Divider />
@@ -220,7 +221,7 @@ export class OrderItem extends React.Component {
           contentStyle={{ width: 400 }}
         >
           <div>
-            <ProductOptions options={product.options} onChange={this.onOptionChange} selectedOptions={selectedOptions} />
+            <ProductOptions options={productOptions} onChange={this.onOptionChange} selectedOptions={selectedOptions} />
             <SelectField
               floatingLabelText={messages.quantity}
               fullWidth={true}
@@ -236,7 +237,8 @@ export class OrderItem extends React.Component {
 }
 
 const OrderItems = ({order, settings, onItemDelete, onItemUpdate}) => {
-  const items = order.items.map((item, index) => <OrderItem key={index} item={item} settings={settings} onItemDelete={onItemDelete} onItemUpdate={onItemUpdate} />)
+  const allowEdit = order.closed === false && order.cancelled === false;
+  const items = order.items.map((item, index) => <OrderItem key={index} item={item} settings={settings} onItemDelete={onItemDelete} onItemUpdate={onItemUpdate} allowEdit={allowEdit} />)
   return (
     <div>
       {items}

@@ -19,19 +19,21 @@ export default class OrderDetails extends React.Component {
     this.props.fetchData();
   }
 
+  componentWillUnmount() {
+    this.props.clearData();
+  }
+
   render() {
-    const {order, settings, onItemDelete, onItemUpdate} = this.props;
+    const {order, settings, onItemDelete, onItemUpdate, onShippingAddressUpdate, onOrderSummaryUpdate} = this.props;
     if (!order)
       return <br/>
-
-      //<div>{order.note}</div>
 
     return (
 
       <div className="row row--no-gutter col-full-height">
         <div className="col-xs-4 col--no-gutter scroll col-full-height">
-          <OrderSummary order={order} settings={settings}/>
-          <OrderCustomer order={order}/>
+          <OrderSummary order={order} settings={settings} onOrderSummaryUpdate={onOrderSummaryUpdate}/>
+          <OrderCustomer order={order} onShippingAddressUpdate={onShippingAddressUpdate}/>
         </div>
         <div className="col-xs-8 col--no-gutter scroll col-full-height">
           <Paper className="paper-box" zDepth={1}>
