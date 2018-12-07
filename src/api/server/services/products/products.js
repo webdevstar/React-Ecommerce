@@ -201,7 +201,8 @@ class ProductsService {
     	},
       url: { "$literal" : "" },
       path: { "$literal" : "" },
-      category_name: { "$literal" : "" }
+      category_name: { "$literal" : "" },
+      category_slug: { "$literal" : "" }
     };
 
     if(fieldsArray && fieldsArray.length > 0) {
@@ -474,7 +475,11 @@ class ProductsService {
     }
 
     if(data.slug !== undefined) {
-      product.slug = parse.getString(data.slug);
+      if(data.slug === '' && product.name && product.name.length > 0) {
+        product.slug = product.name;
+      } else {
+        product.slug = parse.getString(data.slug);
+      }
     }
 
     if(data.sku !== undefined) {
@@ -587,6 +592,10 @@ class ProductsService {
           if(category) {
             if(item.category_name === "") {
               item.category_name = category.name;
+            }
+
+            if(item.category_slug === "") {
+              item.category_slug = category.slug;
             }
 
             if(item.url === "") {

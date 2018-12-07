@@ -162,7 +162,7 @@ function successCreateProduct(id) {
 const getFilter = (state, offset = 0) => {
   let filter = {
     limit: 50,
-    fields: 'id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price,date_updated',
+    fields: 'id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price,date_updated,url',
     search: state.products.filter.search,
     offset: offset,
     sort: '-date_updated'
@@ -292,15 +292,18 @@ export function updateProduct(data) {
 export function createProduct() {
   return (dispatch, getState) => {
     const state = getState();
-    return api.products.create({ enabled: false, category_id: state.productCategories.selectedId }).then(({status, json}) => {
+
+    const productDraft = {
+      enabled: false,
+      category_id: state.productCategories.selectedId
+    };
+
+    return api.products.create(productDraft).then(({status, json}) => {
         dispatch(successCreateProduct(json.id));
         dispatch(fetchProducts());
         dispatch(push('/admin/product/'+json.id));
     })
-    .catch(error => {
-        //dispatch error
-        console.log(error)
-    });
+    .catch(error => {});
   }
 }
 
