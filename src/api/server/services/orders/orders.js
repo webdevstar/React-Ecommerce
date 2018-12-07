@@ -10,10 +10,10 @@ const emailSender = require('../../lib/email');
 const ObjectID = require('mongodb').ObjectID;
 const ProductsService = require('../products/products');
 const CustomersService = require('../customers/customers');
-const OrderStatusesService = require('./order_statuses');
-const PaymentMethodsLightService = require('./payment_methods_light');
-const ShippingMethodsLightService = require('./shipping_methods_light');
-const EmailTemplatesService = require('../settings/email_templates');
+const OrderStatusesService = require('./orderStatuses');
+const PaymentMethodsLightService = require('./paymentMethodsLight');
+const ShippingMethodsLightService = require('./shippingMethodsLight');
+const EmailTemplatesService = require('../settings/emailTemplates');
 const ProductStockService = require('../products/stock');
 
 class OrdersService {
@@ -119,14 +119,18 @@ class OrdersService {
     }
 
     if (params.search) {
-      filter['$text'] = {
-        '$search': params.search
-        // +
-        // 'number':'text',
-        // 'referrer_url':'text',
-        // 'landing_url':'text',
-        // 'coupon':'text',
-      };
+      let alternativeSearch = [];
+
+      const searchAsNumber = parse.getNumberIfPositive(params.search);
+      if(searchAsNumber) {
+        alternativeSearch.push({ number: searchAsNumber });
+      }
+
+      alternativeSearch.push({ email: new RegExp(params.search, 'i') });
+      alternativeSearch.push({ mobile: new RegExp(params.search, 'i') });
+      alternativeSearch.push({ '$text': { '$search': params.search } });
+
+      filter['$or'] = alternativeSearch;
     }
 
     return filter;
@@ -200,9 +204,13 @@ class OrdersService {
       return Promise.reject('Invalid identifier');
     }
     const orderObjectID = new ObjectID(id);
-    return this.getValidDocumentForUpdate(id, data).then(order => mongo.db.collection('orders').updateOne({
-      _id: orderObjectID
-    }, {$set: order}).then(res => this.getSingleOrder(id)));
+    return this.getValidDocumentForUpdate(id, data)
+      .then(orderData => mongo.db.collection('orders').updateOne({_id: orderObjectID}, {$set: orderData}))
+      .then(res => this.getSingleOrder(id))
+      .then(order => {
+        this.updateCustomerStatistics(order.customer_id);
+        return order;
+      });
   }
 
   deleteOrder(orderId) {
@@ -585,6 +593,30 @@ class OrdersService {
     };
 
     return this.updateOrder(orderId, orderData);
+  }
+
+  updateCustomerStatistics(customerId) {
+    if(customerId){
+      return this.getOrders({ customer_id: customerId }).then(orders => {
+        let totalSpent = 0;
+        let ordersCount = 0;
+
+        if(orders.data && orders.data.length > 0){
+          for(const order of orders.data){
+            if(order.draft === false){
+              ordersCount++;
+            }
+            if(order.paid === true || order.closed === true){
+              totalSpent += order.grand_total;
+            }
+          }
+        }
+
+        return CustomersService.updateCustomerStatistics(customerId, totalSpent, ordersCount);
+      })
+    } else {
+      return null;
+    }
   }
 }
 

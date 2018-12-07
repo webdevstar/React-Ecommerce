@@ -1,52 +1,40 @@
 import * as t from './actionTypes'
 
 const initialState = {
-  // editItem: null,
+  editCustomer: null,
   items: [],
   selected: [],
-  isFetchingItems: false,
-  isFetchingMore: false,
-  // isFetchingEdit: false,
-  // isFetched: false
-  // errorFetchEdit: null,
-  // errorFetch: null,
-  // errorUpdate: null,
-  filter_search: ''
+  hasMore: false,
+  totalCount: 0,
+  loadingItems: false,
+  errorLoadingItems: null,
+  search: ''
 };
 
 export default (state = initialState, action) => {
   switch (action.type) {
-    // case t.CUSTOMER_EDIT_REQUEST:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: true
-    //   })
-    // case t.CUSTOMER_EDIT_RECEIVE:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: false,
-    //     editItem: action.item
-    //   })
-    // case t.CUSTOMER_EDIT_ERASE:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: false,
-    //     editItem: null
-    //   })
-    // case t.CUSTOMER_EDIT_FAILURE:
-    //   return Object.assign({}, state, {
-    //     isFetchingEdit: true,
-    //     errorFetchEdit: action.error
-    //   })
+    case t.CUSTOMERS_DETAIL_REQUEST:
+      return Object.assign({}, state, {
+      })
+    case t.CUSTOMERS_DETAIL_RECEIVE:
+      return Object.assign({}, state, {
+        editCustomer: action.item
+      })
     case t.CUSTOMERS_REQUEST:
       return Object.assign({}, state, {
-        isFetchingItems: true
+        loadingItems: true
       })
     case t.CUSTOMERS_RECEIVE:
       return Object.assign({}, state, {
-        isFetchingItems: false,
-        items: action.items
+        loadingItems: false,
+        hasMore: action.has_more,
+        totalCount: action.total_count,
+        items: action.data
       })
     case t.CUSTOMERS_FAILURE:
       return Object.assign({}, state, {
-        isFetchingItems: false
+        loadingItems: false,
+        errorLoadingItems: action.error
       })
     case t.CUSTOMERS_SELECT:
       return Object.assign({}, state, {
@@ -67,20 +55,19 @@ export default (state = initialState, action) => {
       })
     case t.CUSTOMERS_FILTER_SET_SEARCH:
       return Object.assign({}, state, {
-        filter_search: action.search
+        search: action.search
       })
     case t.CUSTOMERS_MORE_REQUEST:
       return Object.assign({}, state, {
-        isFetchingMore: true
+        loadingItems: true
       })
     case t.CUSTOMERS_MORE_RECEIVE:
       return Object.assign({}, state, {
-        isFetchingMore: false,
-        items: [...state.items, ...action.items]
+        loadingItems: false,
+        hasMore: action.has_more,
+        totalCount: action.total_count,
+        items: [...state.items, ...action.data]
       })
-    // case t.CUSTOMER_UPDATE_REQUEST:
-    // case t.CUSTOMER_UPDATE_SUCCESS:
-    // case t.CUSTOMER_UPDATE_FAILURE:
     case t.CUSTOMER_SET_CATEGORY_SUCCESS:
     case t.CUSTOMER_DELETE_SUCCESS:
     default:

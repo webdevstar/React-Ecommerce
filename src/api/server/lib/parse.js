@@ -43,7 +43,7 @@ const getBooleanIfValid = (value, defaultValue = null) => {
 
 const getObjectIDIfValid = (value) => {
   return ObjectID.isValid(value)
-    ? value
+    ? new ObjectID(value)
     : null;
 }
 
@@ -76,10 +76,10 @@ const getCustomerAddress = (address) => {
       'address1': getString(address.address1),
       'address2': getString(address.address2),
       'city': getString(address.city),
-      'country': getString(address.country).toLowerCase(),
-      'state': getString(address.state).toLowerCase(),
+      'country': getString(address.country).toUpperCase(),
+      'state': getString(address.state),
       'phone': getString(address.phone),
-      'zip': getString(address.zip),
+      'postal_code': getString(address.postal_code),
       'full_name': getString(address.full_name),
       'company': getString(address.company),
       'tax_number': getString(address.tax_number),
@@ -107,10 +107,10 @@ const getOrderAddress = (address) => {
       'address1': getString(address.address1),
       'address2': getString(address.address2),
       'city': getString(address.city),
-      'country': getString(address.country).toLowerCase(),
-      'state': getString(address.state).toLowerCase(),
+      'country': getString(address.country).toUpperCase(),
+      'state': getString(address.state),
       'phone': getString(address.phone),
-      'zip': getString(address.zip),
+      'postal_code': getString(address.postal_code),
       'full_name': getString(address.full_name),
       'company': getString(address.company),
       'tax_number': getString(address.tax_number),
@@ -124,7 +124,7 @@ const getOrderAddress = (address) => {
       'country': '',
       'state': '',
       'phone': '',
-      'zip': '',
+      'postal_code': '',
       'full_name': '',
       'company': '',
       'tax_number': '',

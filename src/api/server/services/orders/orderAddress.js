@@ -54,7 +54,7 @@ class OrderAddressService {
     }
 
     if (data.country !== undefined) {
-      address[`${addressTypeName}.country`] = parse.getString(data.country);
+      address[`${addressTypeName}.country`] = parse.getString(data.country).toUpperCase();
     }
 
     if (data.state !== undefined) {
@@ -65,8 +65,8 @@ class OrderAddressService {
       address[`${addressTypeName}.phone`] = parse.getString(data.phone);
     }
 
-    if (data.zip !== undefined) {
-      address[`${addressTypeName}.zip`] = parse.getString(data.zip);
+    if (data.postal_code !== undefined) {
+      address[`${addressTypeName}.postal_code`] = parse.getString(data.postal_code);
     }
 
     if (data.full_name !== undefined) {

@@ -162,9 +162,10 @@ function successCreateProduct(id) {
 const getFilter = (state, offset = 0) => {
   let filter = {
     limit: 50,
-    fields: 'id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price',
+    fields: 'id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price,date_updated,url',
     search: state.products.filter.search,
-    offset: offset
+    offset: offset,
+    sort: '-date_updated'
   }
 
   if(state.productCategories.selectedId !== null && state.productCategories.selectedId !== 'all') {
@@ -274,11 +275,9 @@ export function updateProduct(data) {
   return (dispatch, getState) => {
     dispatch(requestUpdateProduct());
 
-    // don't overwrite images
-    delete data.images;
-
     return api.products.update(data.id, data).then(({status, json}) => {
-        dispatch(receiveUpdateProduct(json));
+        const product = fixProductData(json);
+        dispatch(receiveUpdateProduct(product));
         dispatch(fetchProducts());
     })
     .catch(error => {
@@ -290,34 +289,40 @@ export function updateProduct(data) {
 export function createProduct() {
   return (dispatch, getState) => {
     const state = getState();
-    return api.products.create({ enabled: false, category_id: state.productCategories.selectedId }).then(({status, json}) => {
+
+    const productDraft = {
+      enabled: false,
+      category_id: state.productCategories.selectedId
+    };
+
+    return api.products.create(productDraft).then(({status, json}) => {
         dispatch(successCreateProduct(json.id));
         dispatch(fetchProducts());
         dispatch(push('/admin/product/'+json.id));
     })
-    .catch(error => {
-        //dispatch error
-        console.log(error)
-    });
+    .catch(error => {});
   }
 }
 
+const fixProductData = (product) => {
+  const saleFrom = moment(product.date_sale_from);
+  const saleTo = moment(product.date_sale_to);
+  const stockExpected = moment(product.date_stock_expected);
+
+  product.date_sale_from = saleFrom.isValid() ? saleFrom.toDate() : null;
+  product.date_sale_to = saleTo.isValid() ? saleTo.toDate() : null;
+  product.date_stock_expected = stockExpected.isValid() ? stockExpected.toDate() : null;
+
+  return product;
+}
 
 export function fetchProduct(id) {
   return (dispatch, getState) => {
     dispatch(requestProduct());
 
     return api.products.retrieve(id).then(({status, json}) => {
-      const saleFrom = moment(json.date_sale_from);
-      const saleTo = moment(json.date_sale_to);
-      const stockExpected = moment(json.date_stock_expected);
-
-      json.date_sale_from = saleFrom.isValid() ? saleFrom.toDate() : null;
-      json.date_sale_to = saleTo.isValid() ? saleTo.toDate() : null;
-      json.date_stock_expected = stockExpected.isValid() ? stockExpected.toDate() : null;
-      json.weight = '';
-
-      dispatch(receiveProduct(json))
+      const product = fixProductData(json);
+      dispatch(receiveProduct(product))
     })
     .catch(error => {
       dispatch(receiveProductError(error));
@@ -457,9 +462,12 @@ export function deleteImage(productId, imageId) {
 
 export function updateImages(productId, images) {
   return (dispatch, getState) => {
-    return api.products.update(productId, { images: images }).then(({status, json}) => {
-          dispatch(fetchImages(productId))
-      })
-      .catch(error => {});
+    let promises = images.map(image => api.products.images.update(productId, image.id, image));
+
+    return Promise.all(promises)
+    .then(() => {
+      dispatch(fetchImages(productId))
+    })
+    .catch(error => {});
   }
 }

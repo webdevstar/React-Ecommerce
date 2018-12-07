@@ -3,16 +3,18 @@ import {Field, reduxForm} from 'redux-form'
 import {TextField, SelectField} from 'redux-form-material-ui'
 
 import { CustomToggle } from 'modules/shared/form'
+import api from 'lib/api'
 import messages from 'lib/text'
 import style from './style.css'
 
 import Divider from 'material-ui/Divider';
 import RaisedButton from 'material-ui/RaisedButton';
 import FlatButton from 'material-ui/FlatButton';
+import MenuItem from 'material-ui/MenuItem';
 
 const validate = values => {
   const errors = {}
-  const requiredFields = ['city']
+  const requiredFields = ['email', 'full_name']
 
   requiredFields.map(field => {
     if (values && !values[field]) {
@@ -23,13 +25,25 @@ const validate = values => {
   return errors
 }
 
-class ShippingAddressForm extends React.Component {
+class CustomerEditForm extends React.Component {
   constructor(props) {
-    super(props)
+    super(props);
+    this.state = {
+      groups: []
+    };
+  }
+
+  componentDidMount() {
+    api.customerGroups.list().then(({status, json}) => {
+      this.setState({groups: json});
+    })
   }
 
   render() {
     let {handleSubmit, pristine, submitting, initialValues, onCancel} = this.props;
+
+    let groupItems = this.state.groups.map((item, index) => <MenuItem key={index} value={item.id} primaryText={item.name}/>)
+    groupItems.push(<MenuItem key="none" value={null} primaryText={messages.customers_noGroup}/>)
 
     return (
         <form onSubmit={handleSubmit} style={{
@@ -40,29 +54,17 @@ class ShippingAddressForm extends React.Component {
             <div>
               <Field component={TextField} fullWidth={true} name="full_name" floatingLabelText={messages.fullName}/>
             </div>
+            <Field component={SelectField} fullWidth={true} name="group_id" floatingLabelText={messages.group}>
+              {groupItems}
+            </Field>
             <div>
-              <Field component={TextField} fullWidth={true} name="company" floatingLabelText={messages.company}/>
+              <Field component={TextField} fullWidth={true} name="email" floatingLabelText={messages.email}/>
             </div>
             <div>
-              <Field component={TextField} fullWidth={true} name="address1" floatingLabelText={messages.address1}/>
+              <Field component={TextField} fullWidth={true} name="mobile" floatingLabelText={messages.mobile}/>
             </div>
             <div>
-              <Field component={TextField} fullWidth={true} name="address2" floatingLabelText={messages.address2}/>
-            </div>
-            <div>
-              <Field component={TextField} fullWidth={true} name="city" floatingLabelText={messages.city}/>
-            </div>
-            <div>
-              <Field component={TextField} fullWidth={true} name="state" floatingLabelText={messages.state}/>
-            </div>
-            <div>
-              <Field component={TextField} fullWidth={true} name="postal_code" floatingLabelText={messages.postal_code}/>
-            </div>
-            <div>
-              <Field component={TextField} fullWidth={true} name="country" floatingLabelText={messages.country}/>
-            </div>
-            <div>
-              <Field component={TextField} fullWidth={true} name="phone" floatingLabelText={messages.phone}/>
+              <Field component={TextField} fullWidth={true} name="note" floatingLabelText={messages.note} multiLine={true}/>
             </div>
           </div>
           <div className={style.shippingButtons}>
@@ -83,4 +85,4 @@ class ShippingAddressForm extends React.Component {
   }
 }
 
-export default reduxForm({form: 'ShippingAddressForm', validate, enableReinitialize: true})(ShippingAddressForm)
+export default reduxForm({form: 'CustomerEditForm', validate, enableReinitialize: true})(CustomerEditForm)

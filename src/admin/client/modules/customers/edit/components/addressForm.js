@@ -23,7 +23,7 @@ const validate = values => {
   return errors
 }
 
-class ShippingAddressForm extends React.Component {
+class CustomerAddressForm extends React.Component {
   constructor(props) {
     super(props)
   }
@@ -83,4 +83,4 @@ class ShippingAddressForm extends React.Component {
   }
 }
 
-export default reduxForm({form: 'ShippingAddressForm', validate, enableReinitialize: true})(ShippingAddressForm)
+export default reduxForm({form: 'CustomerAddressForm', validate, enableReinitialize: true})(CustomerAddressForm)

@@ -16,10 +16,11 @@
   "fullName": "Full name",
   "address1": "Address line 1",
   "address2": "Address line 2",
-  "zip": "Postal code",
+  "postal_code": "Postal code",
   "phone": "Phone (optional)",
   "company": "Company (optional)",
   "comments": "Comments (optional)",
   "required": "This field is required.",
-  "emailInvalid": "Please enter a valid email address."
+  "emailInvalid": "Please enter a valid email address.",
+  "sameAsShipping": "Same as shipping address"
 }

@@ -1,17 +1,15 @@
 'use strict';
 
-var mongo = require('../../lib/mongo');
-var utils = require('../../lib/utils');
-var parse = require('../../lib/parse');
-var ObjectID = require('mongodb').ObjectID;
-var customerGroupsService = require('./customer_groups');
+const mongo = require('../../lib/mongo');
+const utils = require('../../lib/utils');
+const parse = require('../../lib/parse');
+const ObjectID = require('mongodb').ObjectID;
+const CustomerGroupsService = require('./customerGroups');
 
 class CustomersService {
   constructor() {}
 
-  getCustomers(params = {}) {
-    // sort
-    // fields
+  getFilter(params = {}) {
     // tag
     // gender
     // date_created_to
@@ -22,7 +20,13 @@ class CustomersService {
     // orders_count_from
 
     let filter = {};
+    const id = parse.getObjectIDIfValid(params.id);
     const group_id = parse.getObjectIDIfValid(params.group_id);
+
+    if (id) {
+      filter._id = new ObjectID(id);
+    }
+
     if (group_id) {
       filter.group_id = group_id;
     }
@@ -33,45 +37,40 @@ class CustomersService {
 
     if (params.search) {
       filter['$or'] = [
-        {
-          '$text': {
-            '$search': params.search
-          }
-        }, {
-          email: {
-            $regex: '*${params.search}*',
-            $options: 'i'
-          }
-        }
-      ]
+        { email: new RegExp(params.search, 'i') },
+        { mobile: new RegExp(params.search, 'i') },
+        { '$text': { '$search': params.search } }
+      ];
     }
 
+    return filter;
+  }
+
+  getCustomers(params = {}) {
+    let filter = this.getFilter(params);
     const limit = parse.getNumberIfPositive(params.limit) || 1000000;
     const offset = parse.getNumberIfPositive(params.offset) || 0;
 
-    return customerGroupsService.getGroups().then(customerGroups => mongo.db.collection('customers').find(filter).sort({date_created: -1}).skip(offset).limit(limit).toArray().then(customers => customers.map(customer => {
-      const customerGroup = customer.group_id
-        ? customerGroups.find(group => group.id === customer.group_id)
-        : null;
-
-      return this.changeProperties(customer, customerGroup)
-    })));
+    return Promise.all([
+      CustomerGroupsService.getGroups(),
+      mongo.db.collection('customers').find(filter).sort({date_created: -1}).skip(offset).limit(limit).toArray(),
+      mongo.db.collection('customers').find(filter).count()
+    ]).then(([customerGroups, customers, customersCount]) => {
+      const items = customers.map(customer => this.changeProperties(customer, customerGroups));
+      const result = {
+        total_count: customersCount,
+        has_more: (offset + items.length) < customersCount,
+        data: items
+      };
+      return result;
+    })
   }
 
   getSingleCustomer(id) {
     if (!ObjectID.isValid(id)) {
       return Promise.reject('Invalid identifier');
     }
-    let customerObjectID = new ObjectID(id);
-
-    return mongo.db.collection('customers').findOne({_id: customerObjectID}).then(customer => {
-      return customer && customer.group_id
-        ? customerGroupsService.getSingleGroup(customer.group_id).then(customerGroup => ({customer, group: customerGroup}))
-        : {
-          customer,
-          group: null
-        };
-    }).then(({customer, group}) => this.changeProperties(customer, group));
+    return this.getCustomers({id: id}).then(items => items.data.length > 0 ? items.data[0] : {})
   }
 
   addCustomer(data) {
@@ -114,6 +113,19 @@ class CustomersService {
     }, {$set: customer})).then(res => this.getSingleCustomer(id))
   }
 
+  updateCustomerStatistics(customerId, totalSpent, ordersCount) {
+    if (!ObjectID.isValid(customerId)) {
+      return Promise.reject('Invalid identifier');
+    }
+    const customerObjectID = new ObjectID(customerId);
+    const customerData = {
+      total_spent: totalSpent,
+      orders_count: ordersCount
+    };
+
+    return mongo.db.collection('customers').updateOne({_id: customerObjectID}, {$set: customerData});
+  }
+
   deleteCustomer(customerId) {
     if (!ObjectID.isValid(customerId)) {
       return Promise.reject('Invalid identifier');
@@ -125,15 +137,11 @@ class CustomersService {
   }
 
   getValidDocumentForInsert(data) {
-    // email can be null
-
     let customer = {
       'date_created': new Date(),
-      'date_last_visit': null,
       'date_updated': null,
-      // 'order_ids': [],
-      // 'total_spent': 0,
-      // 'orders_count': 0
+      'total_spent': 0,
+      'orders_count': 0
     };
 
     customer.note = parse.getString(data.note);
@@ -216,10 +224,14 @@ class CustomersService {
     return customer;
   }
 
-  changeProperties(customer, customerGroup) {
+  changeProperties(customer, customerGroups) {
     if (customer) {
       customer.id = customer._id.toString();
       delete customer._id;
+
+      const customerGroup = customer.group_id
+        ? customerGroups.find(group => group.id === customer.group_id)
+        : null;
 
       customer.group_name = customerGroup && customerGroup.name
         ? customerGroup.name
@@ -261,11 +273,65 @@ class CustomersService {
     });
   }
 
-  createObjectToUpdateAddressFields(data) {
+  createObjectToUpdateAddressFields(address) {
     let fields = {};
-    for (let fieldName of Object.keys(data)) {
-      fields['addresses.$.' + fieldName] = data[fieldName];
+
+    if (address.address1 !== undefined) {
+      fields['addresses.$.address1'] = parse.getString(address.address1);
     }
+
+    if (address.address2 !== undefined) {
+      fields['addresses.$.address2'] = parse.getString(address.address2);
+    }
+
+    if (address.city !== undefined) {
+      fields['addresses.$.city'] = parse.getString(address.city);
+    }
+
+    if (address.country !== undefined) {
+      fields['addresses.$.country'] = parse.getString(address.country).toUpperCase();
+    }
+
+    if (address.state !== undefined) {
+      fields['addresses.$.state'] = parse.getString(address.state);
+    }
+
+    if (address.phone !== undefined) {
+      fields['addresses.$.phone'] = parse.getString(address.phone);
+    }
+
+    if (address.postal_code !== undefined) {
+      fields['addresses.$.postal_code'] = parse.getString(address.postal_code);
+    }
+
+    if (address.full_name !== undefined) {
+      fields['addresses.$.full_name'] = parse.getString(address.full_name);
+    }
+
+    if (address.company !== undefined) {
+      fields['addresses.$.company'] = parse.getString(address.company);
+    }
+
+    if (address.tax_number !== undefined) {
+      fields['addresses.$.tax_number'] = parse.getString(address.tax_number);
+    }
+
+    if (address.coordinates !== undefined) {
+      fields['addresses.$.coordinates'] = address.coordinates;
+    }
+
+    if (address.details !== undefined) {
+      fields['addresses.$.details'] = address.details;
+    }
+
+    if (address.default_billing !== undefined) {
+      fields['addresses.$.default_billing'] = parse.getBooleanIfValid(address.default_billing, false);
+    }
+
+    if (address.default_shipping !== undefined) {
+      fields['addresses.$.default_shipping'] = parse.getBooleanIfValid(address.default_shipping, false);
+    }
+
     return fields;
   }
 
