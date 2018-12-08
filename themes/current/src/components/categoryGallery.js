@@ -1,15 +1,15 @@
 import React from 'react'
-import {Link} from 'react-router'
+import { NavLink } from 'react-router-dom'
 import text from '../lib/text'
 import config from '../lib/config'
 import * as helper from '../lib/helper'
 
 const GalleryItem = ({ category }) => {
-  const imageUrl = category.image && category.image.length > 0 ? helper.getThumbnailUrl(category.image, config.category_thumbnail_width) : '';
+  const imageUrl = category.image && category.image.length > 0 ? helper.getThumbnailUrl(category.image, config.categoryThumbnailWidth) : '';
 
   return (
     <div className="column is-6-tablet is-12-mobile">
-      <Link to={category.path}>
+      <NavLink to={category.path}>
         <div className="card">
           <div className="card-image">
             <figure className="image">
@@ -22,7 +22,7 @@ const GalleryItem = ({ category }) => {
             </div>
           </div>
         </div>
-      </Link>
+      </NavLink>
     </div>
   )
 }

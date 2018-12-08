@@ -17,6 +17,16 @@ module.exports = {
   // used by API
   mongodbServerUrl: 'mongodb://127.0.0.1:27017/shop',
 
+  smtpServer: {
+    host: '',
+    port: 0,
+    secure: true,
+    user: '',
+    pass: '',
+    fromName: '',
+    fromAddress: ''
+  },
+
   // key to sign tokens
   jwtSecretKey: '-',
 

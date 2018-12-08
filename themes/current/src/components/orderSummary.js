@@ -1,11 +1,11 @@
 import React from 'react';
-import {Link} from 'react-router'
+import { NavLink } from 'react-router-dom'
 import text from '../lib/text'
 import config from '../lib/config'
 import * as helper from '../lib/helper'
 
 const SummaryItem = ({settings, item, deleteCartItem, updateCartItemQuantiry}) => {
-  const thumbnail = helper.getThumbnailUrl(item.image_url, config.cart_thumbnail_width);
+  const thumbnail = helper.getThumbnailUrl(item.image_url, config.cartThumbnailWidth);
   const qtyOptions = [];
   const maxQty = item.stock_quantity >= config.maxCartItemQty ? config.maxCartItemQty : item.stock_quantity;
 
