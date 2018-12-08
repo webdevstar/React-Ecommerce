@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('path');
-const url = require('url');
+const { URL } = require('url');
 const settings = require('../../lib/settings');
 var mongo = require('../../lib/mongo');
 var utils = require('../../lib/utils');
@@ -385,6 +385,7 @@ class ProductsService {
      on_sale = parse.getBooleanIfValid(on_sale);
      price_from = parse.getNumberIfPositive(price_from);
      price_to = parse.getNumberIfPositive(price_to);
+     ids = ids.toString();
 
      let queries = [];
      const currentDate = new Date();
@@ -745,7 +746,8 @@ class ProductsService {
       if(item.images && item.images.length > 0) {
         for(let i = 0; i < item.images.length; i++) {
           const imageFileName = item.images[i].filename || '';
-          item.images[i].url = url.resolve(domain, settings.productsUploadUrl + '/' + item.id + '/' + imageFileName);
+          const imageUrl = new URL(settings.productsUploadUrl + '/' + item.id + '/' + imageFileName, domain);
+          item.images[i].url = imageUrl.toString();
         }
         item.images = item.images.sort((a,b) => (a.position - b.position ));
       }
@@ -765,7 +767,8 @@ class ProductsService {
             }
 
             if(item.url === "") {
-              item.url = path.join(domain, category.slug || '', item.slug || '');
+              const itemUrl = new URL((category.slug || '') + '/' + (item.slug || ''), domain);
+              item.url = itemUrl.toString();
             }
 
             if(item.path === "") {
