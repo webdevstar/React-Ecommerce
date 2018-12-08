@@ -1,5 +1,5 @@
 import React from 'react'
-import {Link} from 'react-router'
+import { NavLink } from 'react-router-dom'
 import Waypoint from 'react-waypoint'
 import text from '../lib/text'
 import config from '../lib/config'
@@ -24,7 +24,7 @@ const ItemPrice = ({ product, settings }) => {
 
 const ItemImage = ({ images, alt }) => {
   if(images && images.length > 0) {
-    const imageUrl = helper.getThumbnailUrl(images[0].url, config.list_thumbnail_width);
+    const imageUrl = helper.getThumbnailUrl(images[0].url, config.listThumbnailWidth);
 
     return (
       <img src={imageUrl} alt={alt} />
@@ -42,14 +42,14 @@ const ListItem = ({product, addCartItem, settings}) => {
       <div className="card">
         <div className="card-image">
           <figure className="image">
-            <Link to={product.path}>
+            <NavLink to={product.path}>
               <ItemImage images={product.images} alt={product.name} />
-            </Link>
+            </NavLink>
           </figure>
         </div>
         <div className="card-content">
           <div className="content">
-            <Link to={product.path}>{product.name}</Link>
+            <NavLink to={product.path}>{product.name}</NavLink>
             <ItemPrice product={product} settings={settings} />
           </div>
         </div>

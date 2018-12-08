@@ -1,5 +1,5 @@
 import React from 'react'
-import {Link} from 'react-router'
+import { NavLink } from 'react-router-dom'
 import text from '../lib/text'
 import config from '../lib/config'
 
@@ -8,13 +8,13 @@ import CartIndicator from './cartIndicator'
 
 const HeadMenuItems = ({ categories, onClick, className}) => {
   let items = categories.filter(category => category.parent_id === null).map((category, index) => (
-    <Link className="nav-item" activeClassName="is-active" key={index} to={category.path} onClick={onClick}>
+    <NavLink className="nav-item" activeClassName="is-active" key={index} to={category.path} onClick={onClick}>
       {category.name}
-    </Link>
+    </NavLink>
   ));
 
   return (
-    <div className={className}>
+    <div className={className} style={{ flexGrow: 4 }}>
       {items}
     </div>
   )
@@ -41,32 +41,44 @@ export default class Header extends React.Component {
   });
 
   render() {
-    const {categories, cart, settings} = this.props.state;
-    const classMenu = this.state.mobileMenuIsActive ? 'nav-center nav-menu is-active' : 'nav-center nav-menu is-hidden-mobile';
+    const {categories, cart, settings, currentPage, location} = this.props.state;
+    const classMenu = this.state.mobileMenuIsActive ? 'nav-right nav-menu is-active' : 'nav-right nav-menu is-hidden-mobile';
     const classToggle = this.state.mobileMenuIsActive ? 'nav-toggle is-active' : 'nav-toggle';
+    const classBackToggle = this.state.mobileMenuIsActive ? 'nav-toggle nav-item is-active' : 'nav-toggle nav-item';
+    const showBackButton = currentPage.type === 'product' && location.hasHistory;
 
     return (
-      <nav className="nav has-shadow" style={{ zIndex: 100 }}>
+      <nav className="nav has-shadow" style={{ zIndex: 100, position: 'fixed', width: '100%' }}>
         <div className="container">
-          <span className={classToggle} onClick={this.menuToggle}>
-            <span/>
-            <span/>
-            <span/>
-          </span>
+
+          {!showBackButton &&
+            <span className={classToggle} onClick={this.menuToggle}>
+              <span/>
+              <span/>
+              <span/>
+            </span>
+          }
+
+          {showBackButton &&
+            <span className={classBackToggle} onClick={this.props.goBack} style={{ justifyContent: 'center' }}>
+              <img className="icon" src="/assets/images/arrow_left_big.svg" style={{ width: 18 }} />
+            </span>
+          }
+
           <div className="nav-left">
-            <Link className="nav-item" to="/">
+            <NavLink className="nav-item" to="/">
               <img src={settings.logo}/>
-            </Link>
+            </NavLink>
           </div>
 
           <HeadMenuItems categories={categories} onClick={this.menuClose} className={classMenu} />
 
           <div className="nav-right is-flex-mobile">
-            <Link className="nav-item" to="/search">
+            <NavLink className="nav-item" to="/search">
               <span className="icon">
                 <img src="/assets/images/search.svg" alt={text.search} title={text.search}/>
               </span>
-            </Link>
+            </NavLink>
             <span className="nav-item" onClick={this.cartToggle} style={{ cursor: 'pointer' }}>
               <span className="icon">
                 <img src="/assets/images/shopping-bag.svg" alt={text.cart} title={text.cart}/>

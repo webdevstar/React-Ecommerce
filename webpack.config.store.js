@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 const env = process.env.NODE_ENV;
@@ -13,7 +14,7 @@ module.exports = () => {
 
     output: {
       publicPath: '/',
-      path: path.join(__dirname, 'public'),
+      path: path.resolve(__dirname, 'public'),
       filename: 'assets/js/app-[chunkhash].js'
     },
 
@@ -27,18 +28,32 @@ module.exports = () => {
           test: /\.json$/,
           exclude: /node_modules/,
           use: ['json-loader']
+        }, {
+          test: /\.css$/,
+          use: ExtractTextPlugin.extract({
+              use: [
+                  {
+                      loader: "css-loader",
+                      options: {
+                          modules: false,
+                          importLoaders: true
+                      }
+                  }
+              ]
+          })
         }
       ]
     },
 
     plugins: [
+      new ExtractTextPlugin("assets/css/theme-[chunkhash].css"),
       new webpack.optimize.CommonsChunkPlugin({
         name: 'theme',
         minChunks: Infinity,
         filename: 'assets/js/theme-[chunkhash].js'
       }),
       new HtmlWebpackPlugin({
-        template: 'public/assets/template.html',
+        template: 'themes/current/index.html',
         inject: 'body',
         filename: 'assets/index.html'
       }),

@@ -1,9 +1,11 @@
-import {push} from 'react-router-redux';
 import * as t from './actionTypes'
-import {PAGE, PRODUCT_CATEGORY, PRODUCT, RESERVED} from './pageTypes'
+import {PAGE, PRODUCT_CATEGORY, PRODUCT, RESERVED, SEARCH} from './pageTypes'
 import clientSettings from '../client/settings'
+import queryString from 'query-string'
 import api from 'cezerin-client'
 api.initAjax(clientSettings.ajaxBaseUrl);
+
+const PRODUCTS_FIELDS = 'path,id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price,attributes';
 
 export const fetchProduct = product_id => (dispatch, getState) => {
   dispatch(requestProduct())
@@ -20,29 +22,57 @@ export const fetchProducts = () => (dispatch, getState) => {
   const {app} = getState();
   dispatch(requestProducts());
 
-  let filter = getProductFilter(app.productFilter);
+  let filter = getParsedProductFilter(app.productFilter);
 
   return api.ajax.products.list(filter).then(({status, json}) => {
     dispatch(receiveProducts(json))
-    if(!app.productsMinPrice && !app.productsMaxPrice) {
-      dispatch(setProductsPriceRange(json.price.min, json.price.max));
-    }
   }).catch(error => {});
 }
 
-const PRODUCTS_FIELDS = 'path,id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price';
-const getProductFilter = (productFilter) => {
-  let filter = {
-    on_sale: productFilter.onSale,
-    search: productFilter.search,
-    category_id: productFilter.categoryId,
-    price_from: productFilter.priceFrom,
-    price_to: productFilter.priceTo,
-    sort: productFilter['sort'],
-    fields: PRODUCTS_FIELDS,
-    limit: 30,
-    offset: 0
+export const getProductFilterForCategory = (locationSearch) => {
+  const queryFilter = queryString.parse(locationSearch);
+
+  let attributes = {};
+  for(const querykey in queryFilter){
+    if(querykey.startsWith('attributes.')){
+      attributes[querykey] = queryFilter[querykey];
+    }
   }
+
+  return {
+    priceFrom: parseInt(queryFilter.price_from || 0),
+    priceTo: parseInt(queryFilter.price_to || 0),
+    attributes: attributes
+  }
+}
+
+export const getProductFilterForSearch = (locationSearch) => {
+  const queryFilter = queryString.parse(locationSearch);
+
+  return {
+    categoryId: null,
+    priceFrom: parseInt(queryFilter.price_from || 0),
+    priceTo: parseInt(queryFilter.price_to || 0),
+    search: queryFilter.search
+  }
+}
+
+
+export const getParsedProductFilter = (productFilter) => {
+  const filter = Object.assign({},
+    {
+      on_sale: productFilter.onSale,
+      search: productFilter.search,
+      category_id: productFilter.categoryId,
+      price_from: productFilter.priceFrom,
+      price_to: productFilter.priceTo,
+      sort: productFilter['sort'],
+      fields: PRODUCTS_FIELDS,
+      limit: 30,
+      offset: 0
+    },
+    productFilter.attributes
+  )
 
   return filter;
 }
@@ -58,7 +88,7 @@ export const fetchMoreProducts = () => (dispatch, getState) => {
   } else {
     dispatch(requestMoreProducts());
 
-    let filter = getProductFilter(app.productFilter);
+    let filter = getParsedProductFilter(app.productFilter);
     filter.offset = app.products.length;
 
     return api.ajax.products.list(filter).then(({status, json}) => {
@@ -147,7 +177,7 @@ const receiveShippingMethods = methods => ({
   methods
 })
 
-export const checkout = cart => (dispatch, getState) => {
+export const checkout = (cart, history) => (dispatch, getState) => {
   dispatch(requestCheckout())
   return api.ajax.cart.updateShippingAddress(cart.shipping_address)
     .then(() => api.ajax.cart.updateBillingAddress(cart.billing_address))
@@ -161,7 +191,7 @@ export const checkout = cart => (dispatch, getState) => {
     .then(() => api.ajax.cart.checkout())
     .then(orderResponse => {
       dispatch(receiveCheckout(orderResponse.json))
-      dispatch(push('/checkout-success'));
+      history.push('/checkout-success');
     })
     .catch(error => {});
 }
@@ -172,13 +202,13 @@ const receiveCheckout = order => ({type: t.CHECKOUT_RECEIVE, order})
 
 export const receiveSitemap = currentPage => ({type: t.SITEMAP_RECEIVE, currentPage})
 
+export const setCurrentLocation = location => ({type: t.LOCATION_CHANGED, location})
+
 export const setCategory = categoryId => (dispatch, getState) => {
   const {app} = getState();
   const category = app.categories.find(c => c.id === categoryId);
   if (category) {
     dispatch(setCurrentCategory(category));
-    dispatch(setProductsPriceRange(null, null));
-    dispatch(clearProductsFilter());
     dispatch(setProductsFilter({categoryId: categoryId}));
     dispatch(receiveProduct(null));
   }
@@ -186,41 +216,12 @@ export const setCategory = categoryId => (dispatch, getState) => {
 
 const setCurrentCategory = category => ({type: t.SET_CURRENT_CATEGORY, category})
 
-export const setSearch = search => (dispatch, getState) => {
-  dispatch(setProductsFilter({search: search, categoryId: null}));
-  dispatch(fetchProducts());
-}
-
 export const setSort = sort => (dispatch, getState) => {
   dispatch(setProductsFilter({sort: sort}));
   dispatch(fetchProducts());
 }
 
-export const setPriceFromAndTo = (priceFrom, priceTo) => (dispatch, getState) => {
-  if(priceTo > 0) {
-    dispatch(setProductsFilter({priceFrom: priceFrom, priceTo: priceTo}));
-    dispatch(fetchProducts());
-  }
-}
-
-export const setPriceFrom = priceFrom => (dispatch, getState) => {
-  dispatch(setProductsFilter({priceFrom: priceFrom}));
-  dispatch(fetchProducts());
-}
-
-export const setPriceTo = priceTo => (dispatch, getState) => {
-  if(priceTo > 0) {
-    dispatch(setProductsFilter({priceTo: priceTo}));
-    dispatch(fetchProducts());
-  }
-}
-
-const setProductsPriceRange = (min, max) => ({type: t.SET_PRODUCTS_PRICE_RANGE, min, max})
-
 const setProductsFilter = filter => ({type: t.SET_PRODUCTS_FILTER, filter: filter})
-
-const EMPTY_FILTER = { onSale: null, search: '', priceFrom: 0, priceTo: 0 };
-const clearProductsFilter = () => ({type: t.SET_PRODUCTS_FILTER, filter: EMPTY_FILTER});
 
 export const updateCartShippingCountry = country => (dispatch, getState) => {
   return [
@@ -283,114 +284,69 @@ export const updateCart = cart => (dispatch, getState) => {
   }).catch(error => {});
 }
 
-const getCategories = () => {
-  return api.ajax.productCategories.list({enabled: true}).then(({status, json}) => json)
-}
+export const setCurrentPage = location => (dispatch, getState) => {
+  const { pathname, search, hash } = location;
+  const {app} = getState();
 
-const getProducts = (currentPage, productFilter) => {
-  if (currentPage.type === PRODUCT_CATEGORY) {
-    let filter = getProductFilter(productFilter);
-    return api.ajax.products.list(filter).then(({status, json}) => json)
+  if(app.location.pathname === pathname && app.location.search === search) {
+    // same page
   } else {
-    return Promise.resolve([]);
-  }
-}
+    dispatch(setCurrentLocation({
+      hasHistory: true,
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash
+    }));
 
-const getProduct = currentPage => {
-  if (currentPage.type === PRODUCT) {
-    return api.ajax.products.retrieve(currentPage.resource).then(({status, json}) => json)
-  } else {
-    return Promise.resolve();
-  }
-}
-
-const getCart = cookie => {
-  return api.ajax.cart.retrieve(cookie).then(({status, json}) => json)
-}
-
-const getPage = currentPage => {
-  if (currentPage.type === PAGE) {
-    return api.ajax.pages.retrieve(currentPage.resource).then(pageResponse => {
-      return pageResponse.json;
-    })
-  } else {
-    return Promise.resolve({});
-  }
-}
-
-const getCommonData = (req, currentPage, productFilter) => {
-  const cookie = req.get('cookie');
-  return Promise.all([getCategories(), getProduct(currentPage), getProducts(currentPage, productFilter), getCart(cookie), getPage(currentPage)]).then(([categories, product, products, cart, pageDetails]) => {
-    let categoryDetails = null;
-    if (currentPage.type === PRODUCT_CATEGORY) {
-      categoryDetails = categories.find(c => c.id === currentPage.resource);
-    }
-    return {
-      categories,
-      product,
-      products,
-      categoryDetails,
-      cart,
-      pageDetails
-    }
-  });
-}
-
-export const getInitialState = (req, checkoutFields, currentPage, settings) => {
-  let initialState = {
-    app: {
-      settings: settings,
-      currentPage: currentPage,
-      pageDetails: {},
-      categoryDetails: null,
-      productDetails: null,
-      categories: [],
-      products: [],
-      productsTotalCount: 0,
-      productsHasMore: false,
-      productsMinPrice: 0,
-      productsMaxPrice: 0,
-      paymentMethods: [],
-      shippingMethods: [],
-      loadingProducts: false,
-      loadingMoreProducts: false,
-      loadingShippingMethods: false,
-      loadingPaymentMethods: false,
-      processingCheckout: false,
-      productFilter: {
-        onSale: null,
-        search: '',
-        categoryId: null,
-        priceFrom: 0,
-        priceTo: 0,
-        sort: settings.default_product_sorting
-      },
-      cart: null,
-      order: null,
-      checkoutFields: checkoutFields
+    const category = app.categories.find(c => c.path === pathname);
+    if(category){
+      const newCurrentPage = {
+        type: 'product-category',
+        path: category.path,
+        resource: category.id
+      };
+      dispatch(receiveSitemap(newCurrentPage))
+      dispatch(fetchDataOnCurrentPageChange(newCurrentPage))
+    } else {
+      api.ajax.sitemap.retrieve({ path: pathname })
+      .then(sitemapResponse => {
+        if(sitemapResponse.status === 404){
+          dispatch(receiveSitemap({
+            type: 404,
+            path: pathname,
+            resource: null
+          }))
+        } else {
+          const newCurrentPage = sitemapResponse.json;
+          dispatch(receiveSitemap(newCurrentPage))
+          dispatch(fetchDataOnCurrentPageChange(newCurrentPage))
+        }
+      });
     }
   }
+}
 
-  if (currentPage.type === PRODUCT_CATEGORY) {
-    initialState.app.productFilter.categoryId = currentPage.resource;
+const fetchDataOnCurrentPageChange = currentPage => (dispatch, getState) => {
+  const {app} = getState();
+  let productFilter = null;
+
+  switch(currentPage.type){
+    case PRODUCT_CATEGORY:
+      productFilter = getProductFilterForCategory(app.location.search);
+      dispatch(setCategory(currentPage.resource));
+      dispatch(setProductsFilter(productFilter));
+      dispatch(fetchProducts());
+      break;
+    case SEARCH:
+      productFilter = getProductFilterForSearch(app.location.search);
+      dispatch(setProductsFilter(productFilter));
+      dispatch(fetchProducts());
+      break;
+    case PRODUCT:
+      dispatch(fetchProduct(currentPage.resource))
+      break;
+    case PAGE:
+      dispatch(fetchPage(currentPage.resource))
+      break;
   }
-
-  return getCommonData(req, currentPage, initialState.app.productFilter).then(commonData => {
-    initialState.app.categories = commonData.categories;
-    initialState.app.productDetails = commonData.product;
-    if(commonData.products) {
-      initialState.app.products = commonData.products.data;
-      initialState.app.productsTotalCount = commonData.products.total_count;
-      initialState.app.productsHasMore = commonData.products.has_more;
-      if(commonData.products.price) {
-        initialState.app.productsMinPrice = commonData.products.price.min;
-        initialState.app.productsMaxPrice = commonData.products.price.max;
-      }
-    }
-    initialState.app.categoryDetails = commonData.categoryDetails;
-    initialState.app.cart = commonData.cart;
-    initialState.app.pageDetails = commonData.pageDetails;
-    return initialState;
-  })
-
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import {Link} from 'react-router'
+import { NavLink } from 'react-router-dom'
 import {Range} from 'rc-slider';
 import text from '../lib/text'
 import config from '../lib/config'
@@ -23,10 +23,14 @@ export default class PriceSlider extends React.Component {
     }
   }
 
-  setValues = (values) => this.setState({
-    minValue: values[0],
-    maxValue: values[1]
-  });
+  setValues = (values) => {
+    if(Array.isArray(values) && values.length === 2) {
+      this.setState({
+        minValue: values[0],
+        maxValue: values[1]
+      })
+    }
+  }
 
   render() {
     const { minPrice, maxPrice, setPriceFromAndTo, settings } = this.props;
