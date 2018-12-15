@@ -1,10 +1,10 @@
 import { connect } from 'react-redux'
-import { fetchAccount, updateAccount } from '../actions'
+import { fetchAccount, updateDeveloperAccount } from '../actions'
 import Form from './components/form'
 
 const mapStateToProps = (state) => {
   return {
-    initialValues: state.webstore.account
+    initialValues: state.webstore.account ? state.webstore.account.developer : null
   }
 }
 
@@ -14,7 +14,7 @@ const mapDispatchToProps = (dispatch) => {
       dispatch(fetchAccount())
     },
     onSubmit: (values) => {
-      dispatch(updateAccount(values));
+      dispatch(updateDeveloperAccount(values));
     }
   }
 }

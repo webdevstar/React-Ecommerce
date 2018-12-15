@@ -314,10 +314,5 @@
   "shopUrl": "Shop URL",
   "adminUrl": "Dashboard URL",
   "isDeveloper": "I am developer",
-  "website": "Website",
-  "actions": "Actions",
-  "enable": "Enable",
-  "disable": "Disable",
-  "serviceActions": "Actions",
-  "serviceLogs": "Logs"
+  "website": "Website"
 }
