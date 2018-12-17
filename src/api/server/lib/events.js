@@ -19,10 +19,6 @@ const subscribe = (req, res) => {
         'X-Accel-Buffering': 'no'
       });
       subscribers.push(res);
-
-      req.on("close", () => {
-        subscribers = subscribers.filter(item => item !== res);
-      });
     }
   })
 }
@@ -33,6 +29,7 @@ const sendMessage = (data) => {
     try{
       subscribers[i].write(`data: ${json}\n\n`);
     } catch(e){
+      console.log(e)
     }
   }
 }

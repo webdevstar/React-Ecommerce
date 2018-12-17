@@ -317,7 +317,5 @@
   "website": "Website",
   "actions": "Actions",
   "enable": "Enable",
-  "disable": "Disable",
-  "serviceActions": "Actions",
-  "serviceLogs": "Logs"
+  "disable": "Disable"
 }
