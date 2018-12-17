@@ -7,28 +7,11 @@ import style from './style.css'
 
 export default class ServiceDetails extends React.Component {
   constructor(props) {
-    super(props);
-    this.state = {
-      timer: null
-    };
+    super(props)
   }
 
   componentDidMount() {
     this.props.fetchData();
-
-    // refresh logs every 5 sec
-    const timer = setInterval(() => {
-      const { service, fetchServiceLogs } = this.props;
-      if(service && service.enabled){
-        fetchServiceLogs();
-      }
-    }, 5000)
-
-    this.setState({ timer: timer });
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.state.timer);
   }
 
   render() {
