@@ -2,6 +2,7 @@ import React from 'react'
 import {Field, reduxForm} from 'redux-form'
 import text from '../../text'
 import { formatCurrency } from '../../lib/helper'
+import PaymentForm from './paymentForm'
 
 const validateRequired = value => value
   ? undefined
@@ -143,6 +144,9 @@ class Form extends React.Component {
     const hideBillingAddress = settings.hide_billing_address === true;
 
     if (initialValues && initialValues.items.length > 0) {
+      const { payment_method_gateway, grand_total } = initialValues;
+      const showPaymentForm = payment_method_gateway && payment_method_gateway !== '';
+
       return (
         <form onSubmit={handleSubmit}>
           <div className="checkout-form">
@@ -213,13 +217,13 @@ class Form extends React.Component {
 
             <h2>{text.shippingAddress}</h2>
 
-            <Field className={inputClassName} name="shipping_address.full_name" id="shipping_address.full_name" component={inputField} type="text" label={text.fullName} validate={[validateRequired]}/>
-            <Field className={inputClassName} name="shipping_address.address1" id="shipping_address.address1" component={inputField} type="text" label={text.address1} validate={[validateRequired]}/>
-            <Field className={inputClassName} name="shipping_address.address2" id="shipping_address.address2" component={inputField} type="text" label={text.address2}/>
-            <Field className={inputClassName} name="shipping_address.postal_code" id="shipping_address.postal_code" component={inputField} type="text" label={text.postal_code} validate={[validateRequired]}/>
-            <Field className={inputClassName} name="shipping_address.phone" id="shipping_address.phone" component={inputField} type="text" label={text.phone}/>
-            <Field className={inputClassName} name="shipping_address.company" id="shipping_address.company" component={inputField} type="text" label={text.company}/>
-            <Field className={inputClassName} name="comments" id="customer.comments" component={textareaField} type="text" label={text.comments} rows="3"/>
+            <Field className={inputClassName + ' shipping-fullname'} name="shipping_address.full_name" id="shipping_address.full_name" component={inputField} type="text" label={text.fullName} validate={[validateRequired]}/>
+            <Field className={inputClassName + ' shipping-address1'} name="shipping_address.address1" id="shipping_address.address1" component={inputField} type="text" label={text.address1} validate={[validateRequired]}/>
+            <Field className={inputClassName + ' shipping-address2'} name="shipping_address.address2" id="shipping_address.address2" component={inputField} type="text" label={text.address2}/>
+            <Field className={inputClassName + ' shipping-postalcode'} name="shipping_address.postal_code" id="shipping_address.postal_code" component={inputField} type="text" label={text.postal_code}/>
+            <Field className={inputClassName + ' shipping-phone'} name="shipping_address.phone" id="shipping_address.phone" component={inputField} type="text" label={text.phone}/>
+            <Field className={inputClassName + ' shipping-company'} name="shipping_address.company" id="shipping_address.company" component={inputField} type="text" label={text.company}/>
+            <Field className={inputClassName + ' shipping-comments'} name="comments" id="customer.comments" component={textareaField} type="text" label={text.comments} rows="3"/>
 
             {!hideBillingAddress &&
               <div>
@@ -231,22 +235,31 @@ class Form extends React.Component {
 
                 {!this.state.billingAsShipping &&
                   <div>
-                    <Field className={inputClassName} name="billing_address.full_name" id="billing_address.full_name" component={inputField} type="text" label={text.fullName} validate={[validateRequired]}/>
-                    <Field className={inputClassName} name="billing_address.address1" id="billing_address.address1" component={inputField} type="text" label={text.address1} validate={[validateRequired]}/>
-                    <Field className={inputClassName} name="billing_address.address2" id="billing_address.address2" component={inputField} type="text" label={text.address2}/>
-                    <Field className={inputClassName} name="billing_address.postal_code" id="billing_address.postal_code" component={inputField} type="text" label={text.postal_code} validate={[validateRequired]}/>
-                    <Field className={inputClassName} name="billing_address.phone" id="billing_address.phone" component={inputField} type="text" label={text.phone}/>
-                    <Field className={inputClassName} name="billing_address.company" id="billing_address.company" component={inputField} type="text" label={text.company}/>
+                    <Field className={inputClassName + ' billing-fullname'} name="billing_address.full_name" id="billing_address.full_name" component={inputField} type="text" label={text.fullName} validate={[validateRequired]}/>
+                    <Field className={inputClassName + ' billing-address1'} name="billing_address.address1" id="billing_address.address1" component={inputField} type="text" label={text.address1} validate={[validateRequired]}/>
+                    <Field className={inputClassName + ' billing-address2'} name="billing_address.address2" id="billing_address.address2" component={inputField} type="text" label={text.address2}/>
+                    <Field className={inputClassName + ' billing-postalcode'} name="billing_address.postal_code" id="billing_address.postal_code" component={inputField} type="text" label={text.postal_code} validate={[validateRequired]}/>
+                    <Field className={inputClassName + ' billing-phone'} name="billing_address.phone" id="billing_address.phone" component={inputField} type="text" label={text.phone}/>
+                    <Field className={inputClassName + ' billing-company'} name="billing_address.company" id="billing_address.company" component={inputField} type="text" label={text.company}/>
                   </div>
                 }
               </div>
             }
 
-            <div className="checkout-button-wrap">
-              <button type="button" onClick={handleSubmit(data => {
+            {showPaymentForm &&
+              <PaymentForm gateway={payment_method_gateway} amount={grand_total} shopSettings={settings} onPayment={handleSubmit(data => {
                 finishCheckout(data)
-              })} disabled={submitting || processingCheckout} className={buttonClassName}>{text.orderSubmit}</button>
-            </div>
+              })} />
+            }
+
+            {!showPaymentForm &&
+              <div className="checkout-button-wrap">
+                <button type="button" onClick={handleSubmit(data => {
+                  finishCheckout(data)
+                })} disabled={submitting || processingCheckout} className={buttonClassName}>{text.orderSubmit}</button>
+              </div>
+            }
+
           </div>
         </form>
       )
