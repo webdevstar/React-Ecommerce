@@ -306,19 +306,5 @@
   "orderStatusDeleteAsk": "Will delete status {name}.",
   "orderStatuses": "Order statuses",
   "editOrderStatus": "Edit status",
-  "noOrderStatus": "No status",
-  "apps": "Apps",
-  "webstoreLoginTitle": "Log in to Web Store",
-  "account": "Account",
-  "developerProfile": "Developer profile",
-  "shopUrl": "Shop URL",
-  "adminUrl": "Dashboard URL",
-  "isDeveloper": "I am developer",
-  "website": "Website",
-  "actions": "Actions",
-  "enable": "Enable",
-  "disable": "Disable",
-  "serviceActions": "Actions",
-  "serviceLogs": "Logs",
-  "paymentGateway": "Payment Gateway"
+  "noOrderStatus": "No status"
 }

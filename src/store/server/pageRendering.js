@@ -1,5 +1,6 @@
 import winston from 'winston'
 import serverSettings from './settings'
+import api from 'cezerin-client'
 import React from 'react'
 
 import { StaticRouter } from 'react-router'

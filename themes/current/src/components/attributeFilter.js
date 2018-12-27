@@ -53,7 +53,7 @@ const AttributeSet = ({ attribute, setFilterAttribute, unsetFilterAttribute }) =
 
   return (
     <div className="attribute">
-      <div className="attribute-title">{attribute.name}</div>
+      <b className="attribute-title">{attribute.name}</b>
       {values}
     </div>
   )

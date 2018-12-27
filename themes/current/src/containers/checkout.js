@@ -19,13 +19,13 @@ const CheckoutContainer = (props) => {
         ogDescription={pageDetails.meta_description}
       />
 
-      <section className="section section-checkout">
+      <section className="section" style={{ backgroundColor: '#f5f5f5' }}>
         <div className="container">
           <div className="columns">
-            <div className="column is-4 is-offset-1">
+            <div className="column is-4">
               <OrderSummary {...props} />
             </div>
-            <div className="column is-6">
+            <div className="column is-8">
               <div className="checkout-box">
                 <h1 className="title is-4">{text.checkoutPageTitle}</h1>
                 {checkoutForm}

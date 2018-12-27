@@ -25,7 +25,6 @@ const initialState = {
   paymentMethods: [],
   shippingMethodEdit: {},
   paymentMethodEdit: {},
-  paymentGatewayEdit: {},
   pages: [],
   pageEdit: {},
   tokens: [],
@@ -59,8 +58,6 @@ export default(state = initialState, action) => {
       return Object.assign({}, state, {shippingMethodEdit: action.shippingMethodEdit})
     case t.PAYMENT_METHOD_RECEIVE:
       return Object.assign({}, state, {paymentMethodEdit: action.paymentMethodEdit})
-    case t.PAYMENT_GATEWAY_RECEIVE:
-      return Object.assign({}, state, {paymentGatewayEdit: action.paymentGatewayEdit})
     case t.CHECKOUT_FIELD_REQUEST:
       return Object.assign({}, state, {checkoutField: null})
     case t.CHECKOUT_FIELD_RECEIVE:

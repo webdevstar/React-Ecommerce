@@ -17,11 +17,12 @@ import Orders from 'routes/orders'
 import OrderDetails from 'routes/orders/edit'
 import OrderStatuses from 'routes/orders/statuses'
 import Settings from 'routes/settings'
-import WebStore from 'routes/webstore'
 
 import {blue700, cyan700, pinkA200, grey100, grey300, grey400, white, darkBlack, fullBlack} from 'material-ui/styles/colors';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
+import injectTapEventPlugin from 'react-tap-event-plugin';
+injectTapEventPlugin();
 
 const muiTheme = getMuiTheme({
   fontFamily: 'Roboto, sans-serif',
@@ -70,7 +71,6 @@ export default class App extends React.Component {
                   <Route path="/admin/customer/:customerId" exact component={CustomerDetails}/>
                   <Route path="/admin/product/:productId" component={ProductDetails}/>
                   <Route path="/admin/settings" component={Settings}/>
-                  <Route path="/admin/webstore" component={WebStore}/>
                   <Route component={NotFound}/>
                 </Switch>
               </div>

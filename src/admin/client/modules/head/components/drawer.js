@@ -45,10 +45,6 @@ const menuItems = [
     url: '/admin/settings',
     icon: 'settings'
   }, {
-    title: messages.apps,
-    url: '/admin/webstore',
-    icon: 'apps'
-  }, {
     title: messages.drawer_logout,
     url: '/admin/logout',
     icon: 'exit_to_app'
@@ -101,7 +97,7 @@ const DrawerMenu = ({ open, onClose, currentUrl }) => {
       <Divider key={index} /> :
       <NavLink to={item.url} key={index} exact={true} style={styles.link} activeStyle={styles.linkActive}>
         <MenuItem
-          onClick={onClose}
+          onTouchTap={onClose}
           primaryText={item.title}
           innerDivStyle={styles.itemInnerDiv}
           style={styles.item}
@@ -123,7 +119,7 @@ const DrawerMenu = ({ open, onClose, currentUrl }) => {
         titleStyle={styles.appBarTitle}
         zDepth={0}
         iconElementLeft={
-          <IconButton onClick={onClose}>
+          <IconButton onTouchTap={onClose}>
             <FontIcon color="#9e9e9e" className="material-icons">menu</FontIcon>
           </IconButton>
         }

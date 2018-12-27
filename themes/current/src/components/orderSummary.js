@@ -96,7 +96,7 @@ const OrderSummary = (props) => {
       </div>
     )
   } else {
-    return null;
+    return <div>{text.cartEmpty}</div>
   }
 }
 
