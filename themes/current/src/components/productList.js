@@ -1,5 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
+import Waypoint from 'react-waypoint'
 import text from '../lib/text'
 import config from '../lib/config'
 import * as helper from '../lib/helper'
@@ -7,14 +8,14 @@ import * as helper from '../lib/helper'
 const ItemPrice = ({ product, settings }) => {
   if(product.on_sale) {
     return (
-      <div className="product-price">
-        <span className="product-new-price">{helper.formatCurrency(product.price, settings)}</span>
+      <div>
         <del className="product-old-price">{helper.formatCurrency(product.regular_price, settings)}</del>
+        <span className="product-new-price">{helper.formatCurrency(product.price, settings)}</span>
       </div>
     )
   } else {
     return (
-      <div className="product-price">
+      <div>
         {helper.formatCurrency(product.price, settings)}
       </div>
     )
@@ -44,21 +45,29 @@ const ListItem = ({product, addCartItem, settings, columnCountOnMobile, columnCo
 
   return (
     <div className={`column is-${columnSizeOnMobile}-mobile is-${columnSizeOnDesktop}-tablet`}>
-      <NavLink to={product.path}>
-        <figure className="image">
-          <ItemImage images={product.images} alt={product.name} />
-        </figure>
-        <div className="content product-caption">
-          <div className="product-name">{product.name}</div>
-          <ItemPrice product={product} settings={settings} />
+      <div className="card">
+        <div className="card-image">
+          <figure className="image">
+            <NavLink to={product.path}>
+              <ItemImage images={product.images} alt={product.name} />
+            </NavLink>
+          </figure>
         </div>
-      </NavLink>
+        <div className="card-content">
+          <div className="content">
+            <NavLink to={product.path}>{product.name}</NavLink>
+            <ItemPrice product={product} settings={settings} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
 const LoadMore = ({ loadMoreProducts, hasMore }) => {
-  return (
+  return config.infiniteScrolling ? (
+    <Waypoint onEnter={loadMoreProducts}/>
+  ) : (
     <div className="load-more">
       {hasMore &&
         <button onClick={loadMoreProducts} className="button is-fullwidth is-dark">{text.loadMore}</button>
@@ -69,21 +78,12 @@ const LoadMore = ({ loadMoreProducts, hasMore }) => {
 
 const ProductList = ({products, addCartItem, settings, loadMoreProducts, hasMore, columnCountOnMobile, columnCountOnDesktop}) => {
   const items = products ? products.map((product, index) => {
-    return (
-      <ListItem
-        key={index}
-        product={product}
-        addCartItem={addCartItem}
-        settings={settings}
-        columnCountOnMobile={columnCountOnMobile}
-        columnCountOnDesktop={columnCountOnDesktop}
-      />
-    )
+    return <ListItem key={index} product={product} addCartItem={addCartItem} settings={settings} columnCountOnMobile={columnCountOnMobile} columnCountOnDesktop={columnCountOnDesktop}/>
   }) : null;
 
   return (
     <div>
-      <div className="columns is-multiline is-mobile products">
+      <div className="columns is-multiline is-mobile" style={{ alignItems: 'flex-start' }}>
         {items}
       </div>
       <LoadMore loadMoreProducts={loadMoreProducts} hasMore={hasMore} />

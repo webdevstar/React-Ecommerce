@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import api from './api'
+import api from 'cezerin-client';
 
 const ROBOTS_TEMPLATE_PATH = 'public/robots.template';
 

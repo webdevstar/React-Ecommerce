@@ -158,14 +158,17 @@ class PaymentMethodsService {
   }
 
   getValidDocumentForInsert(data) {
-    let method = {};
+    let method = {
+      // 'logo': '',
+      // 'app_id': null,
+      // 'app_settings': {}
+    }
 
     method.name = parse.getString(data.name);
     method.description = parse.getString(data.description);
     method.position = parse.getNumberIfPositive(data.position) || 0;
     method.enabled = parse.getBooleanIfValid(data.enabled, true);
     method.conditions = this.getPaymentMethodConditions(data.conditions);
-    method.gateway = parse.getString(data.gateway);
 
     return method;
   }
@@ -195,10 +198,6 @@ class PaymentMethodsService {
 
     if (data.conditions !== undefined) {
       method.conditions = this.getPaymentMethodConditions(data.conditions);
-    }
-
-    if (data.gateway !== undefined) {
-      method.gateway = parse.getString(data.gateway);
     }
 
     return method;

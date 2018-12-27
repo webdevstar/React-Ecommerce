@@ -9,6 +9,7 @@ import settings from 'lib/settings'
 import {listenEvents} from 'lib/events'
 import reducers from './rootReducer'
 import App from './app'
+import registerServiceWorker from './registerServiceWorker';
 
 const store = createStore(reducers, applyMiddleware(thunkMiddleware));
 store.dispatch(fetchSettings());
@@ -22,3 +23,5 @@ ReactDOM.render(
     <App />
   </Provider>,
   document.getElementById('app'));
+
+//registerServiceWorker();

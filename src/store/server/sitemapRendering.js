@@ -1,6 +1,6 @@
 import fs from 'fs'
 import sm from 'sitemap'
-import api from './api'
+import api from 'cezerin-client'
 
 const SITEMAP_EXCLUDE_PATH = ['/', '/checkout', '/checkout-success', '/account', '/cart', '/login', '/logout', '/register'];
 

@@ -22,6 +22,8 @@ import WebStore from 'routes/webstore'
 import {blue700, cyan700, pinkA200, grey100, grey300, grey400, white, darkBlack, fullBlack} from 'material-ui/styles/colors';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
+import injectTapEventPlugin from 'react-tap-event-plugin';
+injectTapEventPlugin();
 
 const muiTheme = getMuiTheme({
   fontFamily: 'Roboto, sans-serif',

@@ -319,6 +319,5 @@
   "enable": "Enable",
   "disable": "Disable",
   "serviceActions": "Actions",
-  "serviceLogs": "Logs",
-  "paymentGateway": "Payment Gateway"
+  "serviceLogs": "Logs"
 }

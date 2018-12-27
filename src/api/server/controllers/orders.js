@@ -6,8 +6,6 @@ var OrderAddressService = require('../services/orders/orderAddress');
 var OrderItemsService = require('../services/orders/orderItems');
 var OrdertTansactionsService = require('../services/orders/orderTransactions');
 var OrdertDiscountsService = require('../services/orders/orderDiscounts');
-var SettingsService = require('../services/settings/settings');
-var PaymentGateways = require('../paymentGateways');
 
 class OrdersController {
   constructor(router) {
@@ -41,8 +39,6 @@ class OrdersController {
     this.router.post('/v1/orders/:id/discounts', security.checkUserScope.bind(this, security.scope.WRITE_ORDERS), this.addDiscount.bind(this));
     this.router.put('/v1/orders/:id/discounts/:discount_id', security.checkUserScope.bind(this, security.scope.WRITE_ORDERS), this.updateDiscount.bind(this));
     this.router.delete('/v1/orders/:id/discounts/:discount_id', security.checkUserScope.bind(this, security.scope.WRITE_ORDERS), this.deleteDiscount.bind(this));
-
-    this.router.get('/v1/orders/:id/payment_form_settings', security.checkUserScope.bind(this, security.scope.READ_ORDERS), this.getPaymentFormSettings.bind(this));
   }
 
   getOrders(req, res, next) {
@@ -211,13 +207,6 @@ class OrdersController {
     const discount_id = req.params.item_id;
     OrdertDiscountsService.deleteDiscount(order_id, discount_id).then(data => {
       res.send(data)
-    }).catch(next);
-  }
-
-  getPaymentFormSettings(req, res, next) {
-    const orderId = req.params.id;
-    PaymentGateways.getPaymentFormSettings(orderId).then(data => {
-      res.send(data);
     }).catch(next);
   }
 }

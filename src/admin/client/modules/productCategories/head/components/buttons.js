@@ -58,43 +58,43 @@ export default class Buttons extends React.Component {
     const actionsMoveTo = [
       <FlatButton
         label={messages.cancel}
-        onClick={this.closeMoveTo}
+        onTouchTap={this.closeMoveTo}
         style={{ marginRight: 10 }}
       />,
       <FlatButton
         label={messages.actions_moveHere}
         primary={true}
         keyboardFocused={true}
-        onClick={this.saveMoveTo}
+        onTouchTap={this.saveMoveTo}
       />,
     ];
 
     const actionsDelete = [
       <FlatButton
         label={messages.cancel}
-        onClick={this.closeDelete}
+        onTouchTap={this.closeDelete}
         style={{ marginRight: 10 }}
       />,
       <FlatButton
         label={messages.actions_delete}
         primary={true}
         keyboardFocused={true}
-        onClick={this.deleteCategory}
+        onTouchTap={this.deleteCategory}
       />,
     ];
 
     return (
       <span>
-        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_moveUp} onClick={onMoveUp}>
+        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_moveUp} onTouchTap={onMoveUp}>
           <FontIcon color="#fff" className="material-icons">arrow_upward</FontIcon>
         </IconButton>
-        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_moveDown} onClick={onMoveDown}>
+        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_moveDown} onTouchTap={onMoveDown}>
           <FontIcon color="#fff" className="material-icons">arrow_downward</FontIcon>
         </IconButton>
-        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_delete} onClick={this.showDelete}>
+        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_delete} onTouchTap={this.showDelete}>
           <FontIcon color="#fff" className="material-icons">delete</FontIcon>
         </IconButton>
-        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_moveTo} onClick={this.showMoveTo}>
+        <IconButton touch={true} tooltipPosition="bottom-left" tooltip={messages.actions_moveTo} onTouchTap={this.showMoveTo}>
           <FontIcon color="#fff" className="material-icons">folder</FontIcon>
         </IconButton>
         <Dialog

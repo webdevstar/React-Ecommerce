@@ -70,7 +70,7 @@ class CustomerEditForm extends React.Component {
           <div className={style.shippingButtons}>
             <FlatButton
               label={messages.cancel}
-              onClick={onCancel}
+              onTouchTap={onCancel}
             />
             <FlatButton
               label={messages.save}
