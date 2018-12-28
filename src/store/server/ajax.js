@@ -1,7 +1,7 @@
 import express from 'express'
 let ajaxRouter = express.Router();
 import serverSettings from './settings'
-import api from 'cezerin-client';
+import api from './api'
 
 const DEFAULT_CACHE_CONTROL = 'public, max-age=60';
 const PRODUCTS_CACHE_CONTROL = 'public, max-age=60';
@@ -218,7 +218,13 @@ ajaxRouter.get('/payment_methods', (req, res, next) => {
     order_id: req.signedCookies.order_id
   };
   api.paymentMethods.list(filter).then(({status, json}) => {
-    res.status(status).send(json);
+    const methods = json.map(item => {
+      delete item.gateway_settings;
+      delete item.conditions;
+      return item;
+    });
+
+    res.status(status).send(methods);
   })
 })
 
@@ -230,6 +236,17 @@ ajaxRouter.get('/shipping_methods', (req, res, next) => {
   api.shippingMethods.list(filter).then(({status, json}) => {
     res.status(status).send(json);
   })
+})
+
+ajaxRouter.get('/payment_form_settings', (req, res, next) => {
+  const order_id = req.signedCookies.order_id;
+  if (order_id) {
+    api.orders.getPaymentFormSettings(order_id).then(({ status, json }) => {
+      res.status(status).send(json);
+    })
+  } else {
+    res.end();
+  }
 })
 
 ajaxRouter.all('*', (req, res, next) => {
