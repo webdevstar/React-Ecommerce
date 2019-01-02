@@ -1,11 +1,11 @@
 import React from 'react'
-import text from '../lib/text'
-import config from '../lib/config'
+import { themeSettings, text } from '../lib/settings'
 
 import MetaTags from '../components/metaTags'
 import ProductList from '../components/productList'
 import ProductFilter from '../components/productFilter'
 import Sort from '../components/sort'
+import CategoryBreadcrumbs from '../components/categoryBreadcrumbs'
 import * as helper from '../lib/helper'
 
 const getFilterAttributesSummary = (productFilter) => {
@@ -31,10 +31,13 @@ const getFilterPriceSummary = (productFilter, settings) => {
   return priceSummary;
 }
 
-const CategoryHero = ({ categoryDetails }) => (
+const CategoryHero = ({ categoryDetails, categories }) => (
   <section className="hero is-light">
     <div className="hero-body">
       <div className="container">
+        {themeSettings.show_category_breadcrumbs &&
+          <CategoryBreadcrumbs currentCategory={categoryDetails} categories={categories} />
+        }
         <h1 className="category-title">
           {categoryDetails.name}
         </h1>
@@ -47,7 +50,7 @@ const CategoryHero = ({ categoryDetails }) => (
 )
 
 const CategoryContainer = (props) => {
-  const {products, categoryDetails, settings, productFilter, productsHasMore} = props.state;
+  const {products, categoryDetails, settings, productFilter, productsHasMore, categories} = props.state;
   const {setSort, addCartItem, loadMoreProducts, getJSONLD} = props;
 
   const filterAttributesSummary = getFilterAttributesSummary(productFilter);
@@ -58,7 +61,7 @@ const CategoryContainer = (props) => {
 
   const jsonld = getJSONLD(props.state);
 
-  const showFilter = config.show_product_filter;
+  const showFilter = themeSettings.show_product_filter;
   const columnCountOnMobile = 2;
   const columnCountOnDesktop = showFilter === true ? 3 : 4;
 
@@ -75,7 +78,7 @@ const CategoryContainer = (props) => {
         jsonld={jsonld}
       />
 
-      <CategoryHero categoryDetails={categoryDetails} />
+      <CategoryHero categoryDetails={categoryDetails} categories={categories} />
 
       <section className="section section-category">
         <div className="container">

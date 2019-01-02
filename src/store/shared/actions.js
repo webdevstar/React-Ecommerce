@@ -40,7 +40,8 @@ export const getProductFilterForCategory = (locationSearch) => {
   return {
     priceFrom: parseInt(queryFilter.price_from || 0),
     priceTo: parseInt(queryFilter.price_to || 0),
-    attributes: attributes
+    attributes: attributes,
+    search: null
   }
 }
 
@@ -177,21 +178,32 @@ const receiveShippingMethods = methods => ({
 
 export const checkout = (cart, history) => (dispatch, getState) => {
   dispatch(requestCheckout())
-  return api.ajax.cart.updateShippingAddress(cart.shipping_address)
-    .then(() => api.ajax.cart.updateBillingAddress(cart.billing_address))
-    .then(() => api.ajax.cart.update({
-      email: cart.email,
-      mobile: cart.mobile,
-      payment_method_id: cart.payment_method_id,
-      shipping_method_id: cart.shipping_method_id
-      // coupon: cart.coupon
-    }))
-    .then(() => api.ajax.cart.checkout())
-    .then(orderResponse => {
-      dispatch(receiveCheckout(orderResponse.json))
-      history.push('/checkout-success');
-    })
-    .catch(error => {});
+  if(cart){
+    // update cart and checkout
+    return api.ajax.cart.updateShippingAddress(cart.shipping_address)
+      .then(() => api.ajax.cart.updateBillingAddress(cart.billing_address))
+      .then(() => api.ajax.cart.update({
+        email: cart.email,
+        mobile: cart.mobile,
+        payment_method_id: cart.payment_method_id,
+        shipping_method_id: cart.shipping_method_id,
+        comments: cart.comments
+      }))
+      .then(() => api.ajax.cart.checkout())
+      .then(orderResponse => {
+        dispatch(receiveCheckout(orderResponse.json))
+        history.push('/checkout-success');
+      })
+      .catch(error => {});
+  } else {
+    // just checkout
+    return api.ajax.cart.checkout()
+      .then(orderResponse => {
+        dispatch(receiveCheckout(orderResponse.json))
+        history.push('/checkout-success');
+      })
+      .catch(error => {});
+  }
 }
 
 const requestCheckout = () => ({type: t.CHECKOUT_REQUEST})
@@ -269,16 +281,22 @@ export const updateCartPaymentMethod = method_id => (dispatch, getState) => {
 
 export const updateCart = cart => (dispatch, getState) => {
   return [
-    api.ajax.cart.updateShippingAddress(cart.shipping_address),
-    api.ajax.cart.updateBillingAddress(cart.billing_address),
     api.ajax.cart.update({
-      email: cart.email, mobile: cart.mobile, payment_method_id: cart.payment_method_id, shipping_method_id: cart.shipping_method_id
-      // coupon: cart.coupon
+      email: cart.email,
+      mobile: cart.mobile
     })
   ].reduce((p, fn) => p.then(() => fn), Promise.resolve()).then(({status, json}) => {
     dispatch(receiveCart(json))
-    dispatch(fetchShippingMethods())
-    dispatch(fetchPaymentMethods())
+  }).catch(error => {});
+}
+
+export const updateShipping = cart => (dispatch, getState) => {
+  return [
+    api.ajax.cart.updateShippingAddress(cart.shipping_address),
+    api.ajax.cart.updateBillingAddress(cart.billing_address),
+    api.ajax.cart.update({ comments: cart.comments })
+  ].reduce((p, fn) => p.then(() => fn), Promise.resolve()).then(({status, json}) => {
+    dispatch(receiveCart(json))
   }).catch(error => {});
 }
 

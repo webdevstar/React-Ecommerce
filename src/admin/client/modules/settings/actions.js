@@ -146,7 +146,7 @@ export function receiveNewToken(newToken) {
 export function fetchSettings() {
   return (dispatch, getState) => {
     // API can be not init on app start
-    if(api.settings) {
+    if(api) {
       return api.settings.retrieve().then(({status, json}) => {
         dispatch(receiveSettings(json))
       }).catch(error => {});
@@ -420,5 +420,15 @@ export function updatePaymentGateway(gatewayName, data) {
     return api.paymentGateways.update(gatewayName, data).then(({status, json}) => {
       dispatch(receivePaymentGateway(json))
     }).catch(error => {});
+  }
+}
+
+export function uploadLogo(form) {
+  return (dispatch, getState) => {
+    return api.settings.uploadLogo(form)
+    .then(() => {
+      dispatch(fetchSettings());
+    })
+    .catch(error => {});
   }
 }

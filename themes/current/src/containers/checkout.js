@@ -1,6 +1,5 @@
 import React from 'react'
-import text from '../lib/text'
-import config from '../lib/config'
+import { themeSettings, text } from '../lib/settings'
 
 import MetaTags from '../components/metaTags'
 import OrderSummary from '../components/orderSummary'
@@ -26,10 +25,7 @@ const CheckoutContainer = (props) => {
               <OrderSummary {...props} />
             </div>
             <div className="column is-6">
-              <div className="checkout-box">
-                <h1 className="title is-4">{text.checkoutPageTitle}</h1>
-                {checkoutForm}
-              </div>
+              {checkoutForm}
             </div>
           </div>
         </div>

@@ -1,10 +1,11 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import ImageGallery from 'react-image-gallery'
-import text from '../lib/text'
-import config from '../lib/config'
+import { themeSettings, text } from '../lib/settings'
 import * as helper from '../lib/helper'
 import Disqus from './disqus'
+import ProductBreadcrumbs from './productBreadcrumbs'
+import DiscountCountdown from './discountCountdown'
 
 const ProductOption = ({ option, onChange }) => {
   const values = option.values
@@ -71,11 +72,20 @@ const ProductAttributes = ({ attributes }) => {
 
 const ProductPrice = ({ product, variant, isAllOptionsSelected, settings }) => {
   if(product.variable && variant) {
-    return (
-      <div className="product-price">
-        {helper.formatCurrency(variant.price, settings)}
-      </div>
-    )
+    if(product.on_sale){
+      return (
+        <div className="product-price">
+          <span className="product-new-price">{helper.formatCurrency(variant.price, settings)}</span>
+          <del className="product-old-price">{helper.formatCurrency(product.regular_price, settings)}</del>
+        </div>
+      )
+    } else {
+      return (
+        <div className="product-price">
+          {helper.formatCurrency(variant.price, settings)}
+        </div>
+      )
+    }
   } else if(product.on_sale) {
     return (
       <div className="product-price">
@@ -120,8 +130,8 @@ const ProductGallery = ({ images }) => {
   if (images && images.length > 0) {
     const imagesArray = images.map(image => (
       {
-        original: helper.getThumbnailUrl(image.url, config.bigThumbnailWidth),
-        thumbnail: helper.getThumbnailUrl(image.url, config.previewThumbnailWidth),
+        original: helper.getThumbnailUrl(image.url, themeSettings.bigThumbnailWidth),
+        thumbnail: helper.getThumbnailUrl(image.url, themeSettings.previewThumbnailWidth),
         originalAlt: image.alt,
         thumbnailAlt: image.alt
       }
@@ -133,14 +143,14 @@ const ProductGallery = ({ images }) => {
       <ImageGallery
         items={imagesArray}
         showThumbnails={showThumbnails}
-        lazyLoad={true}
+        lazyLoad={false}
         slideInterval={2000}
         showNav={false}
         showBullets={showThumbnails}
         showPlayButton={false}
         showFullscreenButton={false}
         slideOnThumbnailHover={true}
-        thumbnailPosition="left"
+        thumbnailPosition={themeSettings.product_thumbnail_position}
       />
     )
 
@@ -218,7 +228,7 @@ export default class ProductDetails extends React.Component {
   }
 
   render() {
-    const {product, settings} = this.props;
+    const {product, settings, categories} = this.props;
     const {selectedVariant, isAllOptionsSelected} = this.state;
 
     if(product){
@@ -228,12 +238,19 @@ export default class ProductDetails extends React.Component {
             <div className="container">
               <div className="columns">
                 <div className="column is-7">
+                  {themeSettings.show_product_breadcrumbs &&
+                    <ProductBreadcrumbs product={product} categories={categories} />
+                  }
                   <ProductGallery images={product.images} />
                 </div>
                 <div className="column is-5">
                   <div className="content">
                     <h1 className="title is-4 product-name">{product.name}</h1>
                     <ProductPrice product={product} variant={selectedVariant} isAllOptionsSelected={isAllOptionsSelected} settings={settings} />
+
+                    {themeSettings.show_discount_countdown && product.on_sale === true &&
+                      <DiscountCountdown product={product} />
+                    }
 
                     {product.options && product.options.length > 0 &&
                       <ProductOptions options={product.options} onChange={this.onOptionChange} />
@@ -273,13 +290,13 @@ export default class ProductDetails extends React.Component {
             </section>
           } */}
 
-          {config.disqus_shortname !== '' &&
+          {themeSettings.disqus_shortname !== '' &&
             <section className="section">
               <div className="container">
                 <div className="columns">
                   <div className="column is-7">
                     <Disqus
-                      shortname={config.disqus_shortname}
+                      shortname={themeSettings.disqus_shortname}
                       identifier={product.id}
                       title={product.name}
                       url={product.url}

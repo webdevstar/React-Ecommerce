@@ -1,9 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import text from '../lib/text'
-import config from '../lib/config'
+import { themeSettings, text } from '../lib/settings'
 
-import CategoryTree from './categoryTree'
 import Sort from './sort'
 import PriceSlider from './priceSlider'
 import AttributeFilter from './attributeFilter'
