@@ -4,25 +4,25 @@ import messages from 'lib/text'
 
 export function exportRequest() {
   return {
-    type: t.THEMES_EXPORT_REQUEST
+    type: t.THEME_EXPORT_REQUEST
   }
 }
 
 export function exportReceive() {
   return {
-    type: t.THEMES_EXPORT_RECEIVE
+    type: t.THEME_EXPORT_RECEIVE
   }
 }
 
 export function installRequest() {
   return {
-    type: t.THEMES_INSTALL_REQUEST
+    type: t.THEME_INSTALL_REQUEST
   }
 }
 
 export function installReceive() {
   return {
-    type: t.THEMES_INSTALL_RECEIVE
+    type: t.THEME_INSTALL_RECEIVE
   }
 }
 
@@ -140,6 +140,20 @@ export function receiveNewToken(newToken) {
   return {
     type: t.NEW_TOKEN_RECEIVE,
     newToken
+  }
+}
+
+export function receiveThemeSettings(settings) {
+  return {
+    type: t.THEME_SETTINGS_RECEIVE,
+    settings
+  }
+}
+
+export function receiveThemeSettingsSchema(schema) {
+  return {
+    type: t.THEME_SETTINGS_SCHEMA_RECEIVE,
+    schema
   }
 }
 
@@ -430,5 +444,27 @@ export function uploadLogo(form) {
       dispatch(fetchSettings());
     })
     .catch(error => {});
+  }
+}
+
+export function fetchThemeSettings() {
+  return (dispatch, getState) => {
+    return Promise.all([
+      api.theme.settings.retrieve(),
+      api.theme.settings.retrieveSchema()
+    ])
+    .then(([ settingsResponse, schemaResponse ]) => {
+      dispatch(receiveThemeSettings(settingsResponse.json))
+      dispatch(receiveThemeSettingsSchema(schemaResponse.json))
+    })
+    .catch(error => {});
+  }
+}
+
+export function updateThemeSettings(settings) {
+  return (dispatch, getState) => {
+    return api.theme.settings.update(settings).then(() => {
+      dispatch(fetchThemeSettings())
+    }).catch(error => {});
   }
 }

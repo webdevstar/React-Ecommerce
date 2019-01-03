@@ -8,8 +8,8 @@ const cache = require('lru-cache')({
 });
 const THEME_SETTINGS_CACHE_KEY = 'themesettings';
 
-const SETTINGS_FILE = 'themes/current/config/settings.json';
-const SETTINGS_SCHEMA_FILE = 'themes/current/config/settings_schema.json';
+const SETTINGS_FILE = 'theme/config/settings.json';
+const SETTINGS_SCHEMA_FILE = 'theme/config/settings_schema.json';
 
 class ThemeSettingsService {
   constructor() {}
@@ -20,8 +20,13 @@ class ThemeSettingsService {
         if(err){
           reject(err)
         } else {
-          const jsonData = JSON.parse(data);
-          resolve(jsonData);
+          let jsonData = {};
+          try {
+            jsonData = data.length > 0 ? JSON.parse(data) : {};
+            resolve(jsonData);
+          } catch (e) {
+            reject("Failed to parse JSON");
+          }
         }
       });
     });

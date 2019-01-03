@@ -10,19 +10,16 @@ if [ $# -eq 0 ]; then
 fi
 
 # 1. check file exists
-if [ ! -f "public/$fileName" ]; then
+if [ ! -f "public/content/$fileName" ]; then
     echo "File not found!"
     exit 1
 fi
 
-# 2. create dir if not exists
-mkdir -p themes/current
-
-# 3. delete current theme
-rm -rf themes/current/
+# 3. remove all the contents of theme folder
+rm -rf theme/*
 
 # 4. unzip to current theme
-unzip -q "public/$fileName" -d "themes/current"
+unzip -q "public/content/$fileName" -d "theme"
 
 # 5. show success message
 echo -e '\e[1;92m'Theme $fileName successfully installed'\e[0m'

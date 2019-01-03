@@ -30,18 +30,20 @@ const initialState = {
   pageEdit: null,
   tokens: [],
   tokenEdit: {},
-  newToken: null
+  newToken: null,
+  themeSettings: null,
+  themeSettingsSchema: null
 };
 
 export default(state = initialState, action) => {
   switch (action.type) {
-    case t.THEMES_EXPORT_REQUEST:
+    case t.THEME_EXPORT_REQUEST:
       return Object.assign({}, state, {exportInProcess: true})
-    case t.THEMES_EXPORT_RECEIVE:
+    case t.THEME_EXPORT_RECEIVE:
       return Object.assign({}, state, {exportInProcess: false})
-    case t.THEMES_INSTALL_REQUEST:
+    case t.THEME_INSTALL_REQUEST:
       return Object.assign({}, state, {installInProcess: true})
-    case t.THEMES_INSTALL_RECEIVE:
+    case t.THEME_INSTALL_RECEIVE:
       return Object.assign({}, state, {installInProcess: false})
     case t.SETTINGS_RECEIVE:
       return Object.assign({}, state, {settings: action.settings})
@@ -77,6 +79,10 @@ export default(state = initialState, action) => {
       return Object.assign({}, state, {tokenEdit: action.tokenEdit, newToken: null})
     case t.NEW_TOKEN_RECEIVE:
       return Object.assign({}, state, {newToken: action.newToken})
+    case t.THEME_SETTINGS_RECEIVE:
+      return Object.assign({}, state, {themeSettings: action.settings})
+    case t.THEME_SETTINGS_SCHEMA_RECEIVE:
+      return Object.assign({}, state, {themeSettingsSchema: action.schema})
     default:
       return state
   }
