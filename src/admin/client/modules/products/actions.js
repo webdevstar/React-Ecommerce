@@ -173,10 +173,10 @@ function imagesUploadEnd() {
 const getFilter = (state, offset = 0) => {
   let filter = {
     limit: 50,
-    fields: 'id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price,date_updated,url',
+    fields: 'id,name,category_id,category_name,sku,images,enabled,discontinued,stock_status,stock_quantity,price,on_sale,regular_price,url',
     search: state.products.filter.search,
     offset: offset,
-    sort: '-date_updated'
+    sort: 'name'
   }
 
   if(state.productCategories.selectedId !== null && state.productCategories.selectedId !== 'all') {
@@ -202,10 +202,10 @@ const getFilter = (state, offset = 0) => {
   return filter;
 }
 
-export function fetchProducts(canTakeFromState = false) {
+export function fetchProducts() {
   return (dispatch, getState) => {
     const state = getState();
-    if (state.products.loadingItems || (canTakeFromState && state.products.items.length > 0)) {
+    if (state.products.loadingItems) {
       // do nothing
     } else {
       dispatch(requestProducts());
@@ -230,7 +230,8 @@ export function fetchMoreProducts() {
     if (!state.products.loadingItems) {
       dispatch(requestMoreProducts());
 
-      let filter = getFilter(state, state.products.items.length);
+      const offset = state.products.items.length;
+      let filter = getFilter(state, offset);
 
       return api.products.list(filter)
         .then(({status, json}) => {
@@ -248,9 +249,9 @@ export function deleteCurrentProduct() {
     const state = getState();
     let product = state.products.editProduct;
     if(product && product.id) {
-      return api.products.delete(product.id).then(() => {
-        dispatch(fetchProducts());
-      }).catch(err => { console.log(err) });
+      return api.products.delete(product.id)
+      .then(() => {})
+      .catch(err => { console.log(err) });
     }
   }
 }
@@ -288,7 +289,6 @@ export function updateProduct(data) {
     return api.products.update(data.id, data).then(({status, json}) => {
         const product = fixProductData(json);
         dispatch(receiveUpdateProduct(product));
-        dispatch(fetchProducts());
     })
     .catch(error => {
         dispatch(errorUpdateProduct(error));
@@ -307,7 +307,6 @@ export function createProduct(history) {
 
     return api.products.create(productDraft).then(({status, json}) => {
         dispatch(successCreateProduct(json.id));
-        dispatch(fetchProducts());
         history.push('/admin/product/' + json.id);
     })
     .catch(error => {});
