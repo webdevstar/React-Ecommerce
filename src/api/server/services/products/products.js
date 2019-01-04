@@ -20,8 +20,8 @@ class ProductsService {
         SettingsService.getSettings()
       ]).then(([ categories, generalSettings ]) => {
         const domain = generalSettings.domain || '';
-        const fieldsArray = this.getFieldsArray(params.fields);
-        const limit = parse.getNumberIfPositive(params.limit) || 1000000;
+        const fieldsArray = this.getArrayFromCSV(params.fields);
+        const limit = parse.getNumberIfPositive(params.limit) || 1000;
         const offset = parse.getNumberIfPositive(params.offset) || 0;
         const projectQuery = this.getProjectQuery(fieldsArray);
         const sortQuery = this.getSortQuery(params); // todo: validate every sort field
@@ -50,7 +50,12 @@ class ProductsService {
             this.getAttributesIfNeeded(params, categories, matchTextQuery, projectQuery)
           ]).then(([ itemsResult, countResult, minMaxPriceResult, allAttributesResult, attributesResult ]) => {
 
-            const items = itemsResult.map(item => this.changeProperties(categories, item, domain));
+            const ids = this.getArrayFromCSV(parse.getString(params.ids));
+            const sku = this.getArrayFromCSV(parse.getString(params.sku));
+
+            let items = itemsResult.map(item => this.changeProperties(categories, item, domain));
+            items = this.sortItemsByArrayOfIdsIfNeed(items, ids, sortQuery);
+            items = this.sortItemsByArrayOfSkuIfNeed(items, sku, sortQuery);
 
             let total_count = 0;
             let min_price = 0;
@@ -83,6 +88,18 @@ class ProductsService {
 
           })
       });
+  }
+
+  sortItemsByArrayOfIdsIfNeed(items, arrayOfIds, sortQuery) {
+    return arrayOfIds && arrayOfIds.length > 0 && sortQuery === null
+      ? arrayOfIds.map(id => items.find(item => item.id === id))
+      : items;
+  }
+
+  sortItemsByArrayOfSkuIfNeed(items, arrayOfSku, sortQuery) {
+    return arrayOfSku && arrayOfSku.length > 0 && sortQuery === null
+      ? arrayOfSku.map(sku => items.find(item => item.sku === sku))
+      : items;
   }
 
   getOrganizedAttributes(allAttributesResult, filteredAttributesResult, params) {
@@ -328,7 +345,7 @@ class ProductsService {
     return project;
   }
 
-  getFieldsArray(fields) {
+  getArrayFromCSV(fields) {
     return (fields && fields.length > 0) ? fields.split(',') : [];
   }
 
@@ -461,7 +478,7 @@ class ProductsService {
          queries.push({
            sku: sku
          });
-       }        
+       }
      }
 
      if(useAttributes){
@@ -555,7 +572,7 @@ class ProductsService {
     product.sku = parse.getString(data.sku);
     product.code = parse.getString(data.code);
     product.tax_class = parse.getString(data.tax_class);
-    product.related_product_ids = parse.getArrayIfValid(data.related_product_ids) || [];
+    product.related_product_ids = this.getArrayOfObjectID(data.related_product_ids);
     product.prices = parse.getArrayIfValid(data.prices) || [];
     product.cost_price = parse.getNumberIfPositive(data.cost_price) || 0;
     product.regular_price = parse.getNumberIfPositive(data.regular_price) || 0;
@@ -650,19 +667,7 @@ class ProductsService {
     }
 
     if(data.related_product_ids !== undefined) {
-      const relatedProductIds = parse.getArrayIfValid(data.related_product_ids) || [];
-      const relatedProductObjectIds = [];
-
-      if(relatedProductIds && relatedProductIds.length > 0){
-        for(const stringId of relatedProductIds){
-          const relatedObjectId = parse.getObjectIDIfValid(stringId);
-          if(relatedObjectId){
-            relatedProductObjectIds.push(relatedObjectId);
-          }
-        }
-      }
-
-      product.related_product_ids = relatedProductObjectIds;
+      product.related_product_ids = this.getArrayOfObjectID(data.related_product_ids);
     }
 
     if(data.prices !== undefined) {
@@ -730,6 +735,14 @@ class ProductsService {
     }
 
     return this.setAvailableSlug(product, id).then(product => this.setAvailableSku(product, id));
+  }
+
+  getArrayOfObjectID(array) {
+    if(array && Array.isArray(array)){
+      return array.map(item => parse.getObjectIDIfValid(item))
+    } else {
+      return [];
+    }
   }
 
   getValidAttributesArray(attributes) {

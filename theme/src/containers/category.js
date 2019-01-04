@@ -41,16 +41,17 @@ const CategoryHero = ({ categoryDetails, categories }) => (
         <h1 className="category-title">
           {categoryDetails.name}
         </h1>
-        <h2 className="category-description is-hidden-mobile">
-          {categoryDetails.description}
-        </h2>
+        <h2
+          className="category-description is-hidden-mobile"
+          dangerouslySetInnerHTML={{ __html: categoryDetails.description }}
+        />
       </div>
     </div>
   </section>
 )
 
 const CategoryContainer = (props) => {
-  const {products, categoryDetails, settings, productFilter, productsHasMore, categories} = props.state;
+  const {products, categoryDetails, settings, productFilter, productsHasMore, categories, loadingProducts, loadingMoreProducts} = props.state;
   const {setSort, addCartItem, loadMoreProducts, getJSONLD} = props;
 
   const filterAttributesSummary = getFilterAttributesSummary(productFilter);
@@ -103,6 +104,8 @@ const CategoryContainer = (props) => {
                 settings={settings}
                 loadMoreProducts={loadMoreProducts}
                 hasMore={productsHasMore}
+                loadingProducts={loadingProducts}
+                loadingMoreProducts={loadingMoreProducts}
                 columnCountOnMobile={columnCountOnMobile}
                 columnCountOnDesktop={columnCountOnDesktop}
               />

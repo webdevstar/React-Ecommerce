@@ -116,7 +116,13 @@
 }
 
 .products {
-  align-items: flex-end
+  align-items: flex-end;
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+
+.products.loading {
+  opacity: 0.5;
 }
 
 .products figure.image {
@@ -145,6 +151,16 @@
 
 .products .product-new-price {
   color: #e72b1e;
+}
+
+.products .tags {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+}
+
+.products .column:hover {
+  box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2)
 }
 
 .sort {
