@@ -326,5 +326,9 @@
   "additionalInfo": "Additional Info",
   "relatedProducts": "Related Products",
   "tags": "Tags",
-  "newTag": "New tag name..."
+  "newTag": "New tag name...",
+  "tokenExpired": "Token is expired",
+  "tokenInvalid": "Token is not valid",
+  "productFields": "Product fields",
+  "productsLimit": "Limit product items per request"
 }

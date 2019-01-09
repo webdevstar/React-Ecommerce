@@ -7,6 +7,96 @@ import Disqus from './disqus'
 import ProductBreadcrumbs from './productBreadcrumbs'
 import DiscountCountdown from './discountCountdown'
 import CustomProductList from './customProductList'
+import Lightbox from 'react-image-lightbox'
+const Fragment = React.Fragment;
+
+class ViewedProductList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      viewedProducts: []
+    }
+  }
+
+  getArrayFromLocalStorage = () => {
+    let values = [];
+    let viewedProducts = localStorage.getItem("viewedProducts");
+
+    try{
+      if(viewedProducts && viewedProducts.length > 0){
+        let viewedProductsParsed = JSON.parse(viewedProducts);
+        if(Array.isArray(viewedProductsParsed)){
+          values = viewedProductsParsed;
+        }
+      }
+    } catch(e){};
+
+    return values;
+  }
+
+  addProductIdToLocalStorage = productId => {
+    if(productId && productId.length > 0){
+      let viewedProducts = this.getArrayFromLocalStorage();
+
+      if(viewedProducts.includes(productId)){
+        const index = viewedProducts.indexOf(productId);
+        viewedProducts.splice(index, 1);
+        viewedProducts.push(productId);
+      } else {
+        viewedProducts.push(productId);
+      }
+
+      localStorage.setItem('viewedProducts', JSON.stringify(viewedProducts));
+      this.setState({ viewedProducts: viewedProducts });
+    }
+  }
+
+  componentDidMount() {
+    const viewedProducts = this.getArrayFromLocalStorage();
+    this.setState({ viewedProducts: viewedProducts });
+
+    if(this.props.product && this.props.product.id){
+      this.addProductIdToLocalStorage(this.props.product.id)
+    }
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.state.viewedProducts !== nextState.viewedProducts;
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if(this.props.product !== nextProps.product && nextProps.product && nextProps.product.id){
+      this.addProductIdToLocalStorage(nextProps.product.id)
+    }
+  }
+
+  render() {
+    const { limit, settings, addCartItem } = this.props;
+    const { viewedProducts } = this.state;
+
+    if(viewedProducts && viewedProducts.length > 0){
+      const ids = viewedProducts.reverse().slice(0, limit);
+      return (
+        <section className="section section-product-related">
+          <div className="container">
+            <div className="title is-4 has-text-centered">{text.recentlyViewed}</div>
+            <CustomProductList
+              ids={ids}
+              settings={settings}
+              addCartItem={addCartItem}
+              limit={limit}
+              isCentered={true}
+              columnCountOnMobile={2}
+              columnCountOnDesktop={4}
+            />
+          </div>
+        </section>
+      )
+    } else {
+      return null;
+    }
+  }
+}
 
 const ProductOption = ({ option, onChange }) => {
   const values = option.values
@@ -174,36 +264,133 @@ const ProductTags = ({ tags }) => {
   }
 }
 
-const ProductGallery = ({ images }) => {
-  if (images && images.length > 0) {
-    const imagesArray = images.map(image => (
-      {
-        original: helper.getThumbnailUrl(image.url, themeSettings.bigThumbnailWidth),
-        thumbnail: helper.getThumbnailUrl(image.url, themeSettings.previewThumbnailWidth),
-        originalAlt: image.alt,
-        thumbnailAlt: image.alt
-      }
-    ))
+class ProductQuantity extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      quantity: 1
+    }
+  }
 
-    const showThumbnails = images.length > 1;
+  componentWillReceiveProps(nextProps) {
+    if(this.state.quantity > nextProps.maxQuantity){
+      this.setQuantity(nextProps.maxQuantity);
+    }
+  }
+
+  handleChange = (event) => {
+    this.setQuantity(event.target.value);
+  }
+
+  setQuantity = (quantity) => {
+    const intQuantity = parseInt(quantity);
+    if(intQuantity > 0 && intQuantity <= this.props.maxQuantity){
+      this.setState({ quantity: intQuantity });
+      this.props.onChange(intQuantity);
+    }
+  }
+
+  increment = () => {
+    const newQuantity = this.state.quantity + 1;
+    this.setQuantity(newQuantity);
+  }
+
+  decrement = () => {
+    const newQuantity = this.state.quantity - 1;
+    this.setQuantity(newQuantity);
+  }
+
+  render() {
+    const { maxQuantity } = this.props;
+    const { quantity } = this.state;
+    const disabled = maxQuantity === 0;
+    const value = disabled ? 0 : quantity;
 
     return (
-      <ImageGallery
-        items={imagesArray}
-        showThumbnails={showThumbnails}
-        lazyLoad={false}
-        slideInterval={2000}
-        showNav={false}
-        showBullets={showThumbnails}
-        showPlayButton={false}
-        showFullscreenButton={false}
-        slideOnThumbnailHover={true}
-        thumbnailPosition={themeSettings.product_thumbnail_position}
-      />
+      <Fragment>
+        <div>{text.qty}</div>
+        <div className="product-quantity">
+          <a className="decrement" onClick={this.decrement}></a>
+          <input value={value} onChange={this.handleChange} maxLength="3" type="number" pattern="\d*" disabled={disabled} />
+          <a className="increment" onClick={this.increment}></a>
+        </div>
+      </Fragment>
     )
+  }
+}
 
-  } else {
-    return <div className="large-image-placeholder"></div>;
+class ProductGallery extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      lightboxIsOpen: false,
+      lightboxPhotoIndex: 0
+    }
+  }
+
+  openLightbox = () => {
+    this.setState({ lightboxIsOpen: true });
+  }
+
+  closeLightbox = () => {
+    this.setState({ lightboxIsOpen: false });
+  }
+
+  render() {
+    const { images } = this.props;
+    const { lightboxIsOpen, lightboxPhotoIndex } = this.state;
+
+    if (images && images.length > 0) {
+      const imagesArray = images.map(image => (
+        {
+          original: helper.getThumbnailUrl(image.url, themeSettings.bigThumbnailWidth),
+          thumbnail: helper.getThumbnailUrl(image.url, themeSettings.previewThumbnailWidth),
+          originalAlt: image.alt,
+          thumbnailAlt: image.alt
+        }
+      ))
+
+      const originalImages = images.map(image => image.url);
+      const showThumbnails = images.length > 1;
+
+      return (
+        <div>
+          <ImageGallery
+            items={imagesArray}
+            showThumbnails={showThumbnails}
+            onClick={this.openLightbox}
+            lazyLoad={true}
+            slideInterval={2000}
+            showNav={themeSettings.product_gallery_shownav || true}
+            showBullets={showThumbnails}
+            showPlayButton={false}
+            showFullscreenButton={false}
+            slideOnThumbnailHover={true}
+            thumbnailPosition={themeSettings.product_thumbnail_position}
+          />
+
+          {lightboxIsOpen &&
+              <Lightbox
+                  reactModalStyle={{ overlay: { zIndex: 1099 } }}
+                  mainSrc={originalImages[lightboxPhotoIndex]}
+                  nextSrc={originalImages[(lightboxPhotoIndex + 1) % originalImages.length]}
+                  prevSrc={originalImages[(lightboxPhotoIndex + originalImages.length - 1) % originalImages.length]}
+
+                  onCloseRequest={this.closeLightbox}
+                  onMovePrevRequest={() => this.setState({
+                      lightboxPhotoIndex: (lightboxPhotoIndex + originalImages.length - 1) % originalImages.length,
+                  })}
+                  onMoveNextRequest={() => this.setState({
+                      lightboxPhotoIndex: (lightboxPhotoIndex + 1) % originalImages.length,
+                  })}
+              />
+          }
+
+        </div>
+      )
+    } else {
+      return <div className="large-image-placeholder"></div>;
+    }
   }
 }
 
@@ -213,7 +400,8 @@ export default class ProductDetails extends React.Component {
     this.state = {
       selectedOptions: {},
       selectedVariant: null,
-      isAllOptionsSelected: false
+      isAllOptionsSelected: false,
+      quantity: 1
     }
 
     this.onOptionChange = this.onOptionChange.bind(this);
@@ -250,14 +438,17 @@ export default class ProductDetails extends React.Component {
     this.setState({ selectedVariant: null });
   }
 
+  setQuantity = (quantity) => {
+    this.setState({ quantity: quantity });
+  }
 
   addToCart() {
     const {product, addCartItem} = this.props;
-    const {selectedVariant} = this.state;
+    const {selectedVariant, quantity} = this.state;
 
     let item = {
       product_id: product.id,
-      quantity: 1
+      quantity: quantity
     }
 
     if(selectedVariant) {
@@ -278,6 +469,7 @@ export default class ProductDetails extends React.Component {
   render() {
     const {product, settings, categories} = this.props;
     const {selectedVariant, isAllOptionsSelected} = this.state;
+    const maxQuantity = selectedVariant ? selectedVariant.stock_quantity : product.stock_quantity;
 
     if(product){
       return (
@@ -305,6 +497,7 @@ export default class ProductDetails extends React.Component {
                       <ProductOptions options={product.options} onChange={this.onOptionChange} />
                     }
 
+                    <ProductQuantity maxQuantity={maxQuantity} onChange={this.setQuantity} />
                     <div className="button-addtocart">
                       <AddToCartButton product={product} variant={selectedVariant} addCartItem={this.addToCart} isAllOptionsSelected={isAllOptionsSelected} />
                     </div>
@@ -333,7 +526,18 @@ export default class ProductDetails extends React.Component {
             </div>
           </section>
 
-          <RelatedProducts ids={product.related_product_ids} settings={settings} addCartItem={this.addToCart} />
+          <RelatedProducts
+            ids={product.related_product_ids}
+            settings={settings}
+            addCartItem={this.addToCart}
+          />
+
+          <ViewedProductList
+            product={product}
+            limit={4}
+            settings={settings}
+            addCartItem={this.addToCart}
+          />
 
           {themeSettings.disqus_shortname && themeSettings.disqus_shortname !== '' &&
             <section className="section">
