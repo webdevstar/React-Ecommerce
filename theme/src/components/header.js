@@ -84,7 +84,7 @@ export default class Header extends React.Component {
 
   render() {
     const {categories, cart, settings, currentPage, location, productFilter} = this.props.state;
-    const classToggle = this.state.mobileMenuIsActive ? 'nav-toggle is-active' : 'nav-toggle';
+    const classToggle = this.state.mobileMenuIsActive ? 'navbar-burger is-hidden-tablet is-active' : 'navbar-burger is-hidden-tablet';
     const showBackButton = currentPage.type === 'product' && location.hasHistory;
 
     return (
@@ -92,7 +92,7 @@ export default class Header extends React.Component {
         <header className={this.state.mobileSearchIsActive ? 'search-active' : ''}>
           <div className="container">
 
-            <div className="columns is-gapless is-mobile" style={{ alignItems: 'center', marginTop: 0, marginBottom: '10px' }}>
+            <div className="columns is-gapless is-mobile header-container">
 
               <div className="column is-4">
                 {!showBackButton &&
@@ -103,7 +103,7 @@ export default class Header extends React.Component {
                   </span>
                 }
                 {showBackButton &&
-                  <span className="nav-toggle nav-item is-hidden-tablet" onClick={this.handleGoBack} style={{ justifyContent: 'center' }}>
+                  <span className="navbar-item is-hidden-tablet is-flex-mobile" onClick={this.handleGoBack}>
                     <img className="icon" src="/assets/images/arrow_back.svg" style={{ width: 18 }} />
                   </span>
                 }
@@ -114,10 +114,10 @@ export default class Header extends React.Component {
                   <img src={settings.logo} alt="logo" />
                 </NavLink>
               </div>
-              <div className="column is-4 has-text-right" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <div className="column is-4 has-text-right header-block-right">
 
                 <span className="icon icon-search is-hidden-tablet" onClick={this.searchToggle}>
-                  <img src="/assets/images/search.svg" alt={text.search} title={text.search} style={{ width: 24 }}/>
+                  <img src="/assets/images/search.svg" alt={text.search} title={text.search} style={{ minWidth: 24 }}/>
                 </span>
                 <SearchBox value={productFilter.search} onSearch={this.handleSearch} className={this.state.mobileSearchIsActive ? 'search-active' : ''} />
 
