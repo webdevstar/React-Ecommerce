@@ -4,6 +4,7 @@ var express = require('express');
 var apiRouter = express.Router();
 
 var settings = require('./lib/settings');
+var security = require('./lib/security');
 var mongo = require('./lib/mongo');
 var dashboardEvents = require('./lib/events');
 
@@ -26,6 +27,7 @@ const SecurityTokensController = require('./controllers/tokens');
 const NotificationsController = require('./controllers/notifications');
 const RedirectsController = require('./controllers/redirects');
 const FilesController = require('./controllers/files');
+const AppsController = require('./controllers/apps');
 
 apiRouter.all('/*', function(req, res, next) {
   // CORS headers
@@ -50,11 +52,13 @@ const checkTokenInBlacklistCallback = (req, payload, done) => {
   }
 };
 
-apiRouter.use(expressJwt({secret: settings.jwtSecretKey, isRevoked: checkTokenInBlacklistCallback}).unless({path: [
-  '/api/dashboard/events',
-  '/api/v1/authorize',
-  /\/api\/v1\/notifications/i
-]}));
+if(security.DEVELOPER_MODE === false){
+  apiRouter.use(expressJwt({secret: settings.jwtSecretKey, isRevoked: checkTokenInBlacklistCallback}).unless({path: [
+    '/api/dashboard/events',
+    '/api/v1/authorize',
+    /\/api\/v1\/notifications/i
+  ]}));
+}
 
 var products = new ProductsController(apiRouter);
 var productCategories = new ProductCategoriesController(apiRouter);
@@ -74,6 +78,7 @@ var security = new SecurityTokensController(apiRouter);
 var notifications = new NotificationsController(apiRouter);
 var redirects = new RedirectsController(apiRouter);
 var files = new FilesController(apiRouter);
+var apps = new AppsController(apiRouter);
 
 apiRouter.get('/dashboard/events', function(req, res, next) {
   dashboardEvents.subscribe(req, res);
