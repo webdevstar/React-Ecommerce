@@ -28,6 +28,8 @@ const fillCartItemWithProductData = (products, cartItem) => {
   if(product) {
     cartItem.image_url = product.images.length > 0 ? product.images[0].url : null;
     cartItem.path = product.path;
+    cartItem.stock_backorder = product.stock_backorder;
+    cartItem.stock_preorder = product.stock_preorder;
     if(cartItem.variant_id && cartItem.variant_id.length > 0) {
       const variant = getVariantFromProduct(product, cartItem.variant_id);
       cartItem.stock_quantity = variant ? variant.stock_quantity : 0;
@@ -42,7 +44,7 @@ const fillCartItems = (cartResponse) => {
   let cart = cartResponse.json;
   if(cart && cart.items && cart.items.length > 0) {
     const productIds = cart.items.map(item => item.product_id);
-    return api.products.list({ ids: productIds, fields: 'images,enabled,stock_quantity,variants,path' }).then(({status, json}) => {
+    return api.products.list({ ids: productIds, fields: 'images,enabled,stock_quantity,variants,path,stock_backorder,stock_preorder' }).then(({status, json}) => {
       const newCartItem = cart.items.map(cartItem => fillCartItemWithProductData(json.data, cartItem))
       cartResponse.json.items = newCartItem;
       return cartResponse;
@@ -53,7 +55,7 @@ const fillCartItems = (cartResponse) => {
 }
 
 ajaxRouter.get('/products', (req, res, next) => {
-  const filter = req.query;
+  let filter = req.query;
   filter.enabled = true;
   api.products.list(filter).then(({status, json}) => {
     res.status(status).header('Cache-Control', PRODUCTS_CACHE_CONTROL).send(json);
@@ -70,6 +72,7 @@ ajaxRouter.get('/cart', (req, res, next) => {
   const order_id = req.signedCookies.order_id;
   if (order_id) {
     api.orders.retrieve(order_id).then(cartResponse => fillCartItems(cartResponse)).then(({status, json}) => {
+      json.browser = undefined;
       res.status(status).send(json);
     })
   } else {
@@ -211,7 +214,7 @@ ajaxRouter.get('/pages/:id', (req, res, next) => {
 })
 
 ajaxRouter.get('/sitemap', (req, res, next) => {
-  const filter = req.query;
+  let filter = req.query;
   filter.enabled = true;
   api.sitemap.retrieve(req.query).then(({status, json}) => {
     res.status(status).header('Cache-Control', DEFAULT_CACHE_CONTROL).send(json);
