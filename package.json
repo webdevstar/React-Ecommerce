@@ -22,14 +22,14 @@
       "url": "https://github.com/restmount"
     }
   ],
-  "main": "dist/index.js",
+  "main": "src/api/server/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/cezerin/cezerin"
   },
   "scripts": {
-    "compile:dev": "babel src -d dist --watch & babel theme/src -d theme/dist --watch",
-    "compile": "babel src -d dist --quiet",
+    "compile:dev": "babel src/admin -d dist/admin --watch & babel src/store -d dist/store --watch & babel theme/src -d theme/dist --watch",
+    "compile": "babel src/admin -d dist/admin --quiet && babel src/store -d dist/store --quiet",
     "webpack:admin:dev": "webpack -d --config webpack.config.admin.js --watch --progress --colors",
     "webpack:store:dev": "webpack -d --config webpack.config.store.js --watch --progress --colors",
     "webpack:admin:prod": "NODE_ENV=production webpack -p --config webpack.config.admin.js",
@@ -41,8 +41,9 @@
     "theme:build:prod": "npm run theme:copy --silent && npm run webpack:store:prod",
     "build:dev": "npm run compile:dev & npm run webpack:store:dev & npm run webpack:admin:dev",
     "build": "NODE_ENV=production npm run compile && npm run theme:build:prod && npm run webpack:admin:prod",
-    "start": "NODE_ENV=production node dist/index.js",
-    "restart": "pm2 reload cezerin"
+    "start-api": "node src/api/server/index.js",
+    "start-store": "node dist/store/server/index.js",
+    "start": "NODE_ENV=production npm run start-api & npm run start-store"
   },
   "dependencies": {
     "babel-cli": "^6.26.0",
@@ -55,7 +56,7 @@
     "body-parser": "^1.18.2",
     "cezerin-client": "^0.27.1",
     "cookie-parser": "^1.4.3",
-    "css-loader": "^0.28.7",
+    "css-loader": "^0.28.9",
     "express": "^4.16.2",
     "express-jwt": "^5.3.0",
     "extract-text-webpack-plugin": "^3.0.2",
@@ -77,17 +78,17 @@
     "query-string": "^5.0.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-dropzone": "^4.2.3",
+    "react-dropzone": "^4.2.5",
     "react-helmet": "^5.2.0",
     "react-redux": "^5.0.6",
     "react-router": "^4.2.0",
     "react-router-dom": "^4.2.2",
-    "react-scroll": "^1.7.4",
+    "react-scroll": "^1.7.6",
     "react-sortable-hoc": "^0.6.8",
     "react-tagsinput": "^3.19.0",
     "redux": "^3.7.2",
     "redux-form": "^7.2.0",
-    "redux-form-material-ui": "^4.3.1",
+    "redux-form-material-ui": "^4.3.3",
     "redux-thunk": "^2.2.0",
     "response-time": "^2.3.2",
     "sass-loader": "^6.0.6",
